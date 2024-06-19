@@ -33,7 +33,7 @@ DistributingPointForces::
 void DistributingPointForces::getWeight()
 {
     Kernel *kernel_ = sph_body_.sph_adaptation_->getKernel();
-    Real cutoff_radius_sqr = kernel_->CutOffRadiusSqr();
+    Real cutoff_radius_sqr = kernel_->CutOffRadiusSqr(0.5); // for 2 times of the original cutoff radius
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         sum_of_weight_[i] = 0.0;
@@ -43,7 +43,7 @@ void DistributingPointForces::getWeight()
             Vecd displacement = reference_positions_[i] - pos_[index];
             if (displacement.squaredNorm() <= cutoff_radius_sqr)
             {
-                weight_[i][index] = kernel_->W(displacement.norm(), displacement);
+                weight_[i][index] = kernel_->W(0.5, displacement.norm(), displacement);
                 sum_of_weight_[i] += weight_[i][index];
             }
         }
