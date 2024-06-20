@@ -3,10 +3,10 @@
 namespace SPH
 {
 //=================================================================================================//
-TabulatedFunction::TabulatedFunction(Real dq, std::array<Real, 4> delta_q, std::array<Real, 32> data)
+TabulatedFunction::TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataSize data)
     : dq_(dq), delta_q_(delta_q), data_(data) {}
 //=================================================================================================//
-Real TabulatedRadialFunction::operator()(Real q)
+Real TabulatedFunction::operator()(Real q)
 {
     int location = (int)floor(q / dq_);
     int i = location + 1;
@@ -25,18 +25,8 @@ BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real t
     : name_(name), h_(h), kernel_size_(kernel_size),
       cutoff_radius_(truncation * h * kernel_size) {}
 //=================================================================================================//
-void BaseKernel::setDerivativeParameters()
-{
-    factor_dW_1D_ = factor_w1d_ / h_;
-    factor_dW_2D_ = factor_w2d_ / h_;
-    factor_dW_3D_ = factor_w3d_ / h_;
-    factor_d2W_1D_ = factor_dW_1D_ / h_;
-    factor_d2W_2D_ = factor_dW_2D_ / h_;
-    factor_d2W_3D_ = factor_dW_3D_ / h_;
-}
-//=================================================================================================//
-KernelWendlandC2::KernelWendlandC2(Real h)
-    : BaseKernel("Wendland2CKernel", h, 2.0)
+WendlandC2::KernelWendlandC2(Real h)
+    : BaseKernel("WendlandC2", h, 2.0)
 {
     factor_w1d_ = 3.0 / 4.0 / h_;
     factor_w2d_ = 7.0 / (4.0 * Pi) / h_ / h_;
@@ -44,12 +34,12 @@ KernelWendlandC2::KernelWendlandC2(Real h)
     setDerivativeParameters();
 }
 //=================================================================================================//
-Real KernelWendlandC2::W(const Real q) const
+Real WendlandC2::W(const Real q) const
 {
     return pow(1.0 - 0.5 * q, 4) * (1.0 + 2.0 * q);
 }
 //=================================================================================================//
-Real KernelWendlandC2::dW(const Real q) const
+Real WendlandC2::dW(const Real q) const
 {
     return 0.625 * pow(q - 2.0, 3) * q;
 }

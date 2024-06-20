@@ -45,39 +45,34 @@ class BaseKernel
     Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
     /** Normalization factors for the kernel function  **/
     Real factor_w1d_, factor_w2d_, factor_w3d_;
-    /** Auxiliary factors for the derivative of kernel function  **/
-    Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
-    /** Auxiliary factors for the second order derivative of kernel function  **/
-    Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
-
-    void setDerivativeParameters();
 
   public:
+    /** Truncation gives the case that not the entire support of kernel is used */
     BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation = 1.0);
 };
 
-class KernelWendlandC2 : public BaseKernel
+class WendlandC2 : public BaseKernel
 {
   public:
-    explicit KernelWendlandC2(Real h);
-    virtual ~KernelWendlandC2(){};
+    explicit WendlandC2(Real h);
+    virtual ~WendlandC2(){};
 
     Real W(const Real q) const;
     Real dW(const Real q) const;
 };
 
+const int KernelResolution = 28;
+static constexpr int KernelDataSize = KernelResolution + 4;
+using KernelDataArray = std::array<Real, KernelDataSize>;
+
 /**
- * @class TabulatedRadialFunction
- * @brief Four-point Lagrangian interpolation is
- * used to obtain kernel values.
+ * @class TabulatedFunction
+ * @brief Four-point Lagrangian interpolation is used to obtain kernel values.
  */
-class TabulatedRadialFunction;
+class TabulatedFunction;
 {
   public:
-    static const int resolution_ = 28;
-    static constexpr int data_size_ = resolution_ + 4;
-
-    TabulatedFunction(Real dq, std::array<Real, 4> delta_q, std::array<Real, 32> data);
+    TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataArray data);
     Real operator()(Real q) const;
     Real operator()(Real h_ratio, Real q) const
     {
@@ -87,7 +82,7 @@ class TabulatedRadialFunction;
   protected:
     Real dq_;
     std::array<Real, 4> delta_q_;
-    std::array<Real, data_size_> data_;
+    KernelDataArray data_;
 };
 
 class WithinCutOff
@@ -109,21 +104,17 @@ class WithinCutOff
 
 class SmoothingKernel : public BaseKernel
 {
-    Real truncation_; /**< fraction of full support to obtain cut off radius */
-
-    WithinCutOff within_cutoff_;                 /**< functor to check if particles are within cut off radius */
-    TabulatedRadialFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
-    TabulatedRadialFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
+    WithinCutOff within_cutoff_;           /**< functor to check if particles are within cut off radius */
+    TabulatedFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
+    TabulatedFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 
   public:
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel)
         : BaseKernel(kernel), within_cutoff_(cutoff_radius_)
     {
-        using resolution = TabulatedRadialFunction::resolution_;
-        using data_size = TabulatedRadialFunction::data_size_;
-
-        Real dq = KernelSize() / Real(resolution);
+        Real dq = cutoff_radius_ / Real(KernelResolution);
+        Real support = kernel_size_ * h_;
 
         std::array<Real, 4> delta_q; // interpolation coefficients
         delta_q[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
@@ -131,48 +122,52 @@ class SmoothingKernel : public BaseKernel
         delta_q[2] = (2.0 * dq) * dq * (-1.0 * dq);
         delta_q[3] = (3.0 * dq) * (2.0 * dq) * dq;
 
-        std::array<Real, data_size> w1d_data, w2d_data, w3d_data;
-        std::array<Real, data_size> dw1d_data, dw2d_data, dw3d_data;
-        for (int i = 0; i < data_size; i++)
+        KernelDataArray w1d_data, w2d_data, w3d_data;
+        KernelDataArray dw1d_data, dw2d_data, dw3d_data;
+        for (int i = 0; i < KernelDataSize; i++)
         {
-            w1d_data[i] = factor_w1d_ * kernel.W(Real(i - 1) * dq_);
-            w2d_data[i] = factor_w2d_ * kernel.W(Real(i - 1) * dq_);
-            w3d_data[i] = factor_w3d_ * kernel.W(Real(i - 1) * dq_);
+            Real distance = ABS(Real(i - 1)) * dq; // zero distance value at i=1
 
-            dw1d_data[i] = factor_w1d_ * kernel.dW(Real(i - 1) * dq_) / h_;
-            dw2d_data[i] = factor_w2d_ * kernel.dW(Real(i - 1) * dq_) / h_;
-            dw3d_data[i] = factor_w3d_ * kernel.dW(Real(i - 1) * dq_) / h_;
+            Real value = distance < support ? kernel.W(distance) : 0.0;
+            w1d_data[i] = factor_w1d_ * value;
+            w2d_data[i] = factor_w2d_ * value;
+            w3d_data[i] = factor_w3d_ * value;
+
+            Real derivative = distance < support ? kernel.dW(distance) : 0.0;
+            dw1d_data[i] = factor_w1d_ * derivative / h_;
+            dw2d_data[i] = factor_w2d_ * derivative / h_;
+            dw3d_data[i] = factor_w3d_ * derivative / h_;
         }
 
-        w1d_ = TabulatedRadialFunction(dq, delta_q, w1d_data);
-        w2d_ = TabulatedRadialFunction(dq, delta_q, w2d_data);
-        w3d_ = TabulatedRadialFunction(dq, delta_q, w3d_data);
-        dw1d_ = TabulatedRadialFunction(dq, delta_q, dw1d_data);
-        dw2d_ = TabulatedRadialFunction(dq, delta_q, dw2d_data);
-        dw3d_ = TabulatedRadialFunction(dq, delta_q, dw3d_data);
+        w1d_ = TabulatedFunction(dq, delta_q, w1d_data);
+        w2d_ = TabulatedFunction(dq, delta_q, w2d_data);
+        w3d_ = TabulatedFunction(dq, delta_q, w3d_data);
+        dw1d_ = TabulatedFunction(dq, delta_q, dw1d_data);
+        dw2d_ = TabulatedFunction(dq, delta_q, dw2d_data);
+        dw3d_ = TabulatedFunction(dq, delta_q, dw3d_data);
     }
 
     WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
     Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };
-    TabulatedRadialFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
-    TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw2d_; };
+    TabulatedFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
+    TabulatedFunction KernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw2d_; };
 
     Real KernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w3d_; };
-    TabulatedRadialFunction KernelFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w3d_; };
-    TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw3d_; };
+    TabulatedFunction KernelFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w3d_; };
+    TabulatedFunction KernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw3d_; };
 
     Real SurfaceKernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w1d_; };
-    TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w1d_; };
-    TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw1d_; };
+    TabulatedFunction SurfaceKerneFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w1d_; };
+    TabulatedFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw1d_; };
 
     Real SurfaceKernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w2d_; };
-    TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w2d_; };
-    TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw2d_; };
+    TabulatedFunction SurfaceKerneFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w2d_; };
+    TabulatedFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw2d_; };
 
-    Real LinearKernelAtOrigin() const { return factor_w1d_; };
-    TabulatedRadialFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
-    TabulatedRadialFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
+    Real LinearKernelAtOrigin() const { return factor_w1d_; };                  // only for 3D application
+    TabulatedFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
+    TabulatedFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };
 } // namespace SPH
 #endif // SMOOTHING_KERNELS_H
