@@ -28,8 +28,8 @@
  * @author	Xiangyu Hu
  */
 
-#ifndef SMOOTHING_KERNELS_H
-#define SMOOTHING_KERNELS_H
+#ifndef SMOOTHING_KERNEL_H
+#define SMOOTHING_KERNEL_H
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
@@ -73,11 +73,8 @@ class TabulatedFunction;
 {
   public:
     TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataArray data);
-    Real operator()(Real q) const;
-    Real operator()(Real h_ratio, Real q) const
-    {
-        return operator()(q * h_ratio);
-    };
+    Real operator()(Real q) const;               // for constant smoothing length
+    Real operator()(Real h_ratio, Real q) const; // for variable smoothing length
 
   protected:
     Real dq_;
@@ -89,14 +86,8 @@ class WithinCutOff
 {
   public:
     WithinCutOff(Real rc_ref) : rc_ref_sqr_(rc_ref * rc_ref){};
-    bool operator()(Vecd &displacement) const
-    {
-        return displacement.squaredNorm() < rc_ref_sqr_ ? true : false;
-    };
-    bool operator()(Real h_ratio, Vecd &displacement) const
-    {
-        return (h_ratio * displacement).squaredNorm() < rc_ref_sqr_ ? true : false;
-    };
+    bool operator()(Vecd &displacement) const;               // for constant smoothing length
+    bool operator()(Real h_ratio, Vecd &displacement) const; // for variable smoothing length
 
   protected:
     Real rc_ref_sqr_;
@@ -110,42 +101,7 @@ class SmoothingKernel : public BaseKernel
 
   public:
     template <typename KernelType>
-    explicit SmoothingKernel(const KernelType &kernel)
-        : BaseKernel(kernel), within_cutoff_(cutoff_radius_)
-    {
-        Real dq = cutoff_radius_ / Real(KernelResolution);
-        Real support = kernel_size_ * h_;
-
-        std::array<Real, 4> delta_q; // interpolation coefficients
-        delta_q[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
-        delta_q[1] = dq * (-1.0 * dq) * (-2.0 * dq);
-        delta_q[2] = (2.0 * dq) * dq * (-1.0 * dq);
-        delta_q[3] = (3.0 * dq) * (2.0 * dq) * dq;
-
-        KernelDataArray w1d_data, w2d_data, w3d_data;
-        KernelDataArray dw1d_data, dw2d_data, dw3d_data;
-        for (int i = 0; i < KernelDataSize; i++)
-        {
-            Real distance = ABS(Real(i - 1)) * dq; // zero distance value at i=1
-
-            Real value = distance < support ? kernel.W(distance) : 0.0;
-            w1d_data[i] = factor_w1d_ * value;
-            w2d_data[i] = factor_w2d_ * value;
-            w3d_data[i] = factor_w3d_ * value;
-
-            Real derivative = distance < support ? kernel.dW(distance) : 0.0;
-            dw1d_data[i] = factor_w1d_ * derivative / h_;
-            dw2d_data[i] = factor_w2d_ * derivative / h_;
-            dw3d_data[i] = factor_w3d_ * derivative / h_;
-        }
-
-        w1d_ = TabulatedFunction(dq, delta_q, w1d_data);
-        w2d_ = TabulatedFunction(dq, delta_q, w2d_data);
-        w3d_ = TabulatedFunction(dq, delta_q, w3d_data);
-        dw1d_ = TabulatedFunction(dq, delta_q, dw1d_data);
-        dw2d_ = TabulatedFunction(dq, delta_q, dw2d_data);
-        dw3d_ = TabulatedFunction(dq, delta_q, dw3d_data);
-    }
+    explicit SmoothingKernel(const KernelType &kernel);
 
     WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
@@ -170,4 +126,5 @@ class SmoothingKernel : public BaseKernel
     TabulatedFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };
 } // namespace SPH
-#endif // SMOOTHING_KERNELS_H
+#include "smoothing_kernel.hpp"
+#endif // SMOOTHING_KERNEL_H

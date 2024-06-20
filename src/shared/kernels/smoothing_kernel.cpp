@@ -6,7 +6,7 @@ namespace SPH
 TabulatedFunction::TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataSize data)
     : dq_(dq), delta_q_(delta_q), data_(data) {}
 //=================================================================================================//
-Real TabulatedFunction::operator()(Real q)
+Real TabulatedFunction::operator()(Real q) const
 {
     int location = (int)floor(q / dq_);
     int i = location + 1;
@@ -19,6 +19,21 @@ Real TabulatedFunction::operator()(Real q)
            (fraction_0 * fraction_2 * fraction_3) / delta_q_[1] * data_[i] +
            (fraction_0 * fraction_1 * fraction_3) / delta_q_[2] * data_[i + 1] +
            (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
+}
+//=================================================================================================//
+Real TabulatedFunction::operator()(Real h_ratio, Real q) const
+{
+    return operator()(q * h_ratio);
+}
+//=================================================================================================//
+bool WithinCutOff::operator()(Vecd &displacement) const
+{
+    return displacement.squaredNorm() < rc_ref_sqr_ ? true : false;
+}
+//=================================================================================================//
+bool WithinCutOff::operator()(Real h_ratio, Vecd &displacement) const
+{
+    return (h_ratio * displacement).squaredNorm() < rc_ref_sqr_ ? true : false;
 }
 //=================================================================================================//
 BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation)
