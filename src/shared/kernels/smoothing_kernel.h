@@ -43,20 +43,16 @@ class BaseKernel
     Real h_;           /**< reference smoothing length and its inverse **/
     Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
     /** Normalization factors for the kernel function  **/
-    Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
+    Real factor_w1d_, factor_w2d_, factor_w3d_;
     /** Auxiliary factors for the derivative of kernel function  **/
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
     /** Auxiliary factors for the second order derivative of kernel function  **/
     Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
 
-    setDerivativeParameters();
+    void setDerivativeParameters();
 
   public:
     BaseKernel(Real h, Real kernel_size, const std::string &name);
-    virtual ~BaseKernel(){};
-
-    virtual Real W(const Real q) const = 0;
-    virtual Real dW(const Real q) const = 0;
 };
 
 class KernelWendlandC2 : public BaseKernel
@@ -65,8 +61,8 @@ class KernelWendlandC2 : public BaseKernel
     explicit KernelWendlandC2(Real h);
     virtual ~KernelWendlandC2(){};
 
-    virtual Real W(const Real q) const override;
-    virtual Real dW(const Real q) const override;
+    Real W(const Real q) const;
+    Real dW(const Real q) const;
 };
 
 /**
@@ -107,7 +103,7 @@ class WithinCutOff
     Real rc_ref_sqr_;
 };
 
-class SmoothingKernel
+class SmoothingKernel : public BaseKernel
 {
     std::string name_;
     Real h_;             /**< reference smoothing length **/
@@ -116,30 +112,37 @@ class SmoothingKernel
     Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
 
     WithinCutOff within_cutoff_;                 /**< functor to check if particles are within cut off radius */
+    Real factor_w1d_, factor_w2d_, factor_w3d_;  /**< kernel value at origin for 1, 2 and 3d **/
     TabulatedRadialFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
     TabulatedRadialFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 
   public:
     template <typename KernelType>
-    explicit SmoothingKernel(KernelType kernel);
+    explicit SmoothingKernel(const KernelType &kernel)
+        : BaseKernel(kernel){};
 
     std::string Name() const { return name_; };
     Real SmoothingLength() const { return h_; };
     Real KernelSize() const { return kernel_size_; };
     WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
+    Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };
     TabulatedRadialFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
     TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw2d_; };
 
+    Real KernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w3d_; };
     TabulatedRadialFunction KernelFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w3d_; };
     TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw3d_; };
 
+    Real SurfaceKernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w1d_; };
     TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w1d_; };
     TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw1d_; };
 
+    Real SurfaceKernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w2d_; };
     TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w2d_; };
     TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw2d_; };
 
+    Real LinearKernelAtOrigin() const { return factor_w1d_; };
     TabulatedRadialFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
     TabulatedRadialFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };

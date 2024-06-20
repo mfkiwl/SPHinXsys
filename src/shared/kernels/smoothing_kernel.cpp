@@ -21,12 +21,22 @@ Real TabulatedRadialFunction::operator()(Real q)
 BaseKernel::BaseKernel(Real h, Real kernel_size, const std::string &name)
     : h_(h), kernel_size_(kernel_size), name_(name) {}
 //=================================================================================================//
+void BaseKernel::setDerivativeParameters()
+{
+    factor_dW_1D_ = factor_W_1D_ / h_;
+    factor_dW_2D_ = factor_W_2D_ / h_;
+    factor_dW_3D_ = factor_W_3D_ / h_;
+    factor_d2W_1D_ = factor_dW_1D_ / h_;
+    factor_d2W_2D_ = factor_dW_2D_ / h_;
+    factor_d2W_3D_ = factor_dW_3D_ / h_;
+}
+//=================================================================================================//
 KernelWendlandC2::KernelWendlandC2(Real h)
     : BaseKernel(h, 2.0, "Wendland2CKernel")
 {
-    factor_W_1D_ = inv_h_ * 3.0 / 4.0;
-    factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * Pi);
-    factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 21.0 / (16.0 * Pi);
+    factor_W_1D_ = 3.0 / 4.0 / h_;
+    factor_W_2D_ = 7.0 / (4.0 * Pi) / h_ / h_;
+    factor_W_3D_ = 21.0 / (16.0 * Pi) / h_ / h_ / h_;
     setDerivativeParameters();
 }
 //=================================================================================================//
