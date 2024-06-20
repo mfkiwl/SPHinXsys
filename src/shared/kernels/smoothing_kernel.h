@@ -79,7 +79,7 @@ using KernelDataArray = std::array<Real, KernelDataSize>;
  * @class TabulatedFunction
  * @brief Four-point Lagrangian interpolation is used to obtain kernel values.
  */
-class TabulatedFunction;
+class TabulatedFunction
 {
   public:
     TabulatedFunction(Real h, Real dq, KernelDataArray data);
@@ -93,7 +93,6 @@ class TabulatedFunction;
 
 class SmoothingKernel : public BaseKernel
 {
-    WithinCutOff within_cutoff_;           /**< functor to check if particles are within cut off radius */
     TabulatedFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
     TabulatedFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 

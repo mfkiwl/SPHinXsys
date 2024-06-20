@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 template <typename KernelType>
 SmoothingKernel::SmoothingKernel(const KernelType &kernel)
-    : BaseKernel(kernel), within_cutoff_(cutoff_radius_)
+    : BaseKernel(kernel)
 {
     Real dq = cutoff_radius_ / Real(KernelResolution);
     Real support = kernel_size_ * h_;

@@ -4,7 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 TabulatedFunction::TabulatedFunction(Real h, Real dq, KernelDataArray data)
-    : inv_h_(1.0 / h_), dq_(dq), data_(data)
+    : inv_h_(1.0 / h), dq_(dq), data_(data)
 {
     delta_q_[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
     delta_q_[1] = dq * (-1.0 * dq) * (-2.0 * dq);
@@ -14,7 +14,8 @@ TabulatedFunction::TabulatedFunction(Real h, Real dq, KernelDataArray data)
 //=================================================================================================//
 Real TabulatedFunction::operator()(Real distance) const
 {
-    int location = (int)floor(distance * inv_h_ / dq_);
+    Real q = distance * inv_h_;
+    int location = (int)floor(q / dq_);
     int i = location + 1;
     Real fraction_1 = q - Real(location) * dq_; // fraction_1 correspond to i
     Real fraction_0 = fraction_1 + dq_;         // fraction_0 correspond to i-1
@@ -31,13 +32,11 @@ BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real t
     : name_(name), h_(h), kernel_size_(kernel_size),
       cutoff_radius_(truncation * h * kernel_size) {}
 //=================================================================================================//
-WendlandC2::KernelWendlandC2(Real h)
-    : BaseKernel("WendlandC2", h, 2.0)
+WendlandC2::WendlandC2(Real h) : BaseKernel("WendlandC2", h, 2.0)
 {
     factor_w1d_ = 3.0 / 4.0 / h_;
     factor_w2d_ = 7.0 / (4.0 * Pi) / h_ / h_;
     factor_w3d_ = 21.0 / (16.0 * Pi) / h_ / h_ / h_;
-    setDerivativeParameters();
 }
 //=================================================================================================//
 Real WendlandC2::W(const Real q) const
