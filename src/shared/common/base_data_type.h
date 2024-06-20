@@ -89,6 +89,12 @@ using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
 using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 
+// type trait for pass type template constructor
+// This is a C++17 replacement to the C++20 https://en.cppreference.com/w/cpp/types/type_identity.
+template <typename T>
+struct TypeIdentity
+{
+};
 /** Unified initialize to zero for all data type. */
 /**
  * NOTE: Eigen::Matrix<> constexpr constructor?

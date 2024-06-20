@@ -36,6 +36,39 @@
 
 namespace SPH
 {
+class BaseKernel
+{
+  protected:
+    std::string name_;
+    Real h_;           /**< reference smoothing length and its inverse **/
+    Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
+    /** Normalization factors for the kernel function  **/
+    Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
+    /** Auxiliary factors for the derivative of kernel function  **/
+    Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+    /** Auxiliary factors for the second order derivative of kernel function  **/
+    Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
+
+    setDerivativeParameters();
+
+  public:
+    BaseKernel(Real h, Real kernel_size, const std::string &name);
+    virtual ~BaseKernel(){};
+
+    virtual Real W(const Real q) const = 0;
+    virtual Real dW(const Real q) const = 0;
+};
+
+class KernelWendlandC2 : public BaseKernel
+{
+  public:
+    explicit KernelWendlandC2(Real h);
+    virtual ~KernelWendlandC2(){};
+
+    virtual Real W(const Real q) const override;
+    virtual Real dW(const Real q) const override;
+};
+
 /**
  * @class TabulatedRadialFunction
  * @brief Four-point Lagrangian interpolation is
@@ -47,93 +80,68 @@ class TabulatedRadialFunction;
     template <typename OriginalRadialFunction>
     TabulatedFunction();
     Real operator()(Real q) const;
-    Real operator()(Real h_ratio, Real q) const;
+    Real operator()(Real h_ratio, Real q) const
+    {
+        return operator()(q * h_ratio);
+    };
 
   protected:
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
     std::array<Real, 32> discreted_data_;
 };
 
-class withinCutOff
+class WithinCutOff
 {
   public:
-    withinCutOff(Real rc_ref) : rc_ref_sqr_(rc_ref * rc_ref){};
+    WithinCutOff(Real rc_ref) : rc_ref_sqr_(rc_ref * rc_ref){};
     bool operator()(Vecd &displacement) const
     {
         return displacement.squaredNorm() < rc_ref_sqr_ ? true : false;
     };
-    bool operator()(Real h_ratio, Vecd &displacement) const;
+    bool operator()(Real h_ratio, Vecd &displacement) const
+    {
+        return (h_ratio * displacement).squaredNorm() < rc_ref_sqr_ ? true : false;
+    };
 
   protected:
     Real rc_ref_sqr_;
 };
 
-struct SmoothingKernel
+class SmoothingKernel
 {
     std::string name_;
-    Real h_;           /**< reference smoothing length **/
-    Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
-    Real truncation_;  /**< to obtain cut off radius */
-    Real rc_ref_;      /** reference cut off radius, beyond this kernel value is neglected. **/
+    Real h_;             /**< reference smoothing length **/
+    Real kernel_size_;   /**< generally 2.0, kernel_size_ *  h_ gives the zero kernel value */
+    Real truncation_;    /**< fraction of full support to obtain cut off radius */
+    Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
 
-    withinCutoff within_cutoff_;                 /**< functor to check if particles are within cut off radius */
+    WithinCutOff within_cutoff_;                 /**< functor to check if particles are within cut off radius */
     TabulatedRadialFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
     TabulatedRadialFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
-    TabulatedRadialFunction dw1d_, dw2d_, dw3d_; /**< kernel 2nd-order derivative for 1, 2 and 3d **/
 
+  public:
     template <typename KernelType>
     explicit SmoothingKernel(KernelType kernel);
 
-    //----------------------------------------------------------------------
-    //		Below are for variable smoothing length.
-    //		Note that we input the ratio between the reference smoothing length
-    //		to the variable smoothing length.
-    //----------------------------------------------------------------------
-  protected:
-    /** Functor for variable smoothing length. */
-    typedef std::function<Real(const Real &)> FactorFunctor;
-    FactorFunctor h_factor_W_1D_, h_factor_W_2D_, h_factor_W_3D_;
-    FactorFunctor h_factor_dW_1D_, h_factor_dW_2D_, h_factor_dW_3D_;
-    FactorFunctor h_factor_d2W_1D_, h_factor_d2W_2D_, h_factor_d2W_3D_;
+    std::string Name() const { return name_; };
+    Real SmoothingLength() const { return h_; };
+    Real KernelSize() const { return kernel_size_; };
+    WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
-    Real factorW1D(const Real &h_ratio) const { return h_ratio; };
-    Real factorW2D(const Real &h_ratio) const { return h_ratio * h_ratio; };
-    Real factorW3D(const Real &h_ratio) const { return h_ratio * h_ratio * h_ratio; };
-    Real factordW1D(const Real &h_ratio) const { return factorW1D(h_ratio) * h_ratio; };
-    Real factordW2D(const Real &h_ratio) const { return factorW2D(h_ratio) * h_ratio; };
-    Real factordW3D(const Real &h_ratio) const { return factorW3D(h_ratio) * h_ratio; };
-    Real factord2W1D(const Real &h_ratio) const { return factordW1D(h_ratio) * h_ratio; };
-    Real factord2W2D(const Real &h_ratio) const { return factordW2D(h_ratio) * h_ratio; };
-    Real factord2W3D(const Real &h_ratio) const { return factordW3D(h_ratio) * h_ratio; };
+    TabulatedRadialFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
+    TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw2d_; };
 
-  public:
-    Real CutOffRadius(Real h_ratio) const { return rc_ref_ / h_ratio; };
-    Real CutOffRadiusSqr(Real h_ratio) const { return rc_ref_sqr_ / (h_ratio * h_ratio); };
+    TabulatedRadialFunction KernelFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w3d_; };
+    TabulatedRadialFunction KernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw3d_; };
 
-    Real W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const;
-    Real W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const;
-    Real W(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const;
+    TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w1d_; };
+    TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw1d_; };
 
-    /** Calculates the kernel value at the origin **/
-    Real W0(const Real &h_ratio, const Real &point_i) const;
-    Real W0(const Real &h_ratio, const Vec2d &point_i) const;
-    Real W0(const Real &h_ratio, const Vec3d &point_i) const;
+    TabulatedRadialFunction SurfaceKerneFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w2d_; };
+    TabulatedRadialFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw2d_; };
 
-    /** Calculates the kernel derivation for the given distance of two particles **/
-    Real dW(const Real &h_ratio, const Real &r_ij, const Real &displacement) const;
-    Real dW(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const;
-    Real dW(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const;
-
-    /** Calculates the kernel second order derivation for the given distance of two particles **/
-    Real d2W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const;
-    Real d2W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const;
-    Real d2W(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const;
-    //----------------------------------------------------------------------
-    //		Below are for reduced kernels.
-    //----------------------------------------------------------------------
-  public:
-    void reduceOnce();  /** reduce for thin structures or films */
-    void reduceTwice(); /** reduce for linear structures or filaments */
+    TabulatedRadialFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
+    TabulatedRadialFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };
 } // namespace SPH
 #endif // SMOOTHING_KERNELS_H
