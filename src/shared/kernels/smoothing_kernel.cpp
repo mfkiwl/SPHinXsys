@@ -3,12 +3,18 @@
 namespace SPH
 {
 //=================================================================================================//
-TabulatedFunction::TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataSize data)
-    : dq_(dq), delta_q_(delta_q), data_(data) {}
-//=================================================================================================//
-Real TabulatedFunction::operator()(Real q) const
+TabulatedFunction::TabulatedFunction(Real h, Real dq, KernelDataArray data)
+    : inv_h_(1.0 / h_), dq_(dq), data_(data)
 {
-    int location = (int)floor(q / dq_);
+    delta_q_[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
+    delta_q_[1] = dq * (-1.0 * dq) * (-2.0 * dq);
+    delta_q_[2] = (2.0 * dq) * dq * (-1.0 * dq);
+    delta_q_[3] = (3.0 * dq) * (2.0 * dq) * dq;
+}
+//=================================================================================================//
+Real TabulatedFunction::operator()(Real distance) const
+{
+    int location = (int)floor(distance * inv_h_ / dq_);
     int i = location + 1;
     Real fraction_1 = q - Real(location) * dq_; // fraction_1 correspond to i
     Real fraction_0 = fraction_1 + dq_;         // fraction_0 correspond to i-1
@@ -19,21 +25,6 @@ Real TabulatedFunction::operator()(Real q) const
            (fraction_0 * fraction_2 * fraction_3) / delta_q_[1] * data_[i] +
            (fraction_0 * fraction_1 * fraction_3) / delta_q_[2] * data_[i + 1] +
            (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
-}
-//=================================================================================================//
-Real TabulatedFunction::operator()(Real h_ratio, Real q) const
-{
-    return operator()(q * h_ratio);
-}
-//=================================================================================================//
-bool WithinCutOff::operator()(Vecd &displacement) const
-{
-    return displacement.squaredNorm() < rc_ref_sqr_ ? true : false;
-}
-//=================================================================================================//
-bool WithinCutOff::operator()(Real h_ratio, Vecd &displacement) const
-{
-    return (h_ratio * displacement).squaredNorm() < rc_ref_sqr_ ? true : false;
 }
 //=================================================================================================//
 BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation)

@@ -13,12 +13,6 @@ SmoothingKernel::SmoothingKernel(const KernelType &kernel)
     Real dq = cutoff_radius_ / Real(KernelResolution);
     Real support = kernel_size_ * h_;
 
-    std::array<Real, 4> delta_q; // interpolation coefficients
-    delta_q[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
-    delta_q[1] = dq * (-1.0 * dq) * (-2.0 * dq);
-    delta_q[2] = (2.0 * dq) * dq * (-1.0 * dq);
-    delta_q[3] = (3.0 * dq) * (2.0 * dq) * dq;
-
     KernelDataArray w1d_data, w2d_data, w3d_data;
     KernelDataArray dw1d_data, dw2d_data, dw3d_data;
     for (int i = 0; i < KernelDataSize; i++)
@@ -36,12 +30,12 @@ SmoothingKernel::SmoothingKernel(const KernelType &kernel)
         dw3d_data[i] = factor_w3d_ * derivative / h_;
     }
 
-    w1d_ = TabulatedFunction(dq, delta_q, w1d_data);
-    w2d_ = TabulatedFunction(dq, delta_q, w2d_data);
-    w3d_ = TabulatedFunction(dq, delta_q, w3d_data);
-    dw1d_ = TabulatedFunction(dq, delta_q, dw1d_data);
-    dw2d_ = TabulatedFunction(dq, delta_q, dw2d_data);
-    dw3d_ = TabulatedFunction(dq, delta_q, dw3d_data);
+    w1d_ = TabulatedFunction(h_, dq, w1d_data);
+    w2d_ = TabulatedFunction(h_, dq, w2d_data);
+    w3d_ = TabulatedFunction(h_, dq, w3d_data);
+    dw1d_ = TabulatedFunction(h_, dq, dw1d_data);
+    dw2d_ = TabulatedFunction(h_, dq, dw2d_data);
+    dw3d_ = TabulatedFunction(h_, dq, dw3d_data);
 }
 //=================================================================================================//
 } // namespace SPH

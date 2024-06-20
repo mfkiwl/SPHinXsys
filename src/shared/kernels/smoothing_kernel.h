@@ -22,9 +22,15 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file smoothing_kernel.h
- * @brief This is the classes of kernel functions.
- * The kernal function define the relevance between two neighboring particles.
+ * @brief This is a generalized implementation of SPH smoothing kernel.
+ * The kernal function defines the relevance between two neighboring particles.
  * Basically, the further the two particles, the less relevance they have.
+ * Note that the smoothing kernel here is defined on an isotropic uniform
+ * space without deformation. For anisotropic space with adaptive resolutions,
+ * the complication will be introduced in other classes.
+ * Also note, in order to generalize for different kernel types,
+ * the kernel profiles is mapped onto an array so that the evaluation
+ * process is dependent on an interpolation only.
  * @author	Xiangyu Hu
  */
 
@@ -41,14 +47,18 @@ class BaseKernel
   protected:
     std::string name_;
     Real h_;             /**< reference smoothing length and its inverse **/
-    Real kernel_size_;   /**<kernel_size_ *  h_ gives the zero kernel value */
-    Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
+    Real kernel_size_;   /**< kernel_size_ *  h_ gives the zero kernel value */
+    Real cutoff_radius_; /**< reference cut off radius, beyond this kernel value is neglected. **/
     /** Normalization factors for the kernel function  **/
     Real factor_w1d_, factor_w2d_, factor_w3d_;
 
   public:
     /** Truncation gives the case that not the entire support of kernel is used */
     BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation = 1.0);
+    std::string Name() const { return name_; };
+    Real SmoothingLength() const { return h_; };
+    Real KernelSize() const { return kernel_size_; };
+    Real CutOffRadius() const { return cutoff_radius_; };
 };
 
 class WendlandC2 : public BaseKernel
@@ -61,8 +71,8 @@ class WendlandC2 : public BaseKernel
     Real dW(const Real q) const;
 };
 
-const int KernelResolution = 28;
-static constexpr int KernelDataSize = KernelResolution + 4;
+const int KernelResolution = 20;
+constexpr int KernelDataSize = KernelResolution + 4;
 using KernelDataArray = std::array<Real, KernelDataSize>;
 
 /**
@@ -72,25 +82,13 @@ using KernelDataArray = std::array<Real, KernelDataSize>;
 class TabulatedFunction;
 {
   public:
-    TabulatedFunction(Real dq, std::array<Real, 4> delta_q, KernelDataArray data);
-    Real operator()(Real q) const;               // for constant smoothing length
-    Real operator()(Real h_ratio, Real q) const; // for variable smoothing length
+    TabulatedFunction(Real h, Real dq, KernelDataArray data);
+    Real operator()(Real distance) const;
 
   protected:
-    Real dq_;
-    std::array<Real, 4> delta_q_;
+    Real inv_h_, dq_;
+    std::array<Real, 4> delta_q_; // interpolation coefficients
     KernelDataArray data_;
-};
-
-class WithinCutOff
-{
-  public:
-    WithinCutOff(Real rc_ref) : rc_ref_sqr_(rc_ref * rc_ref){};
-    bool operator()(Vecd &displacement) const;               // for constant smoothing length
-    bool operator()(Real h_ratio, Vecd &displacement) const; // for variable smoothing length
-
-  protected:
-    Real rc_ref_sqr_;
 };
 
 class SmoothingKernel : public BaseKernel
@@ -102,8 +100,6 @@ class SmoothingKernel : public BaseKernel
   public:
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel);
-
-    WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
     Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };
     TabulatedFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
