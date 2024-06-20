@@ -40,8 +40,9 @@ class BaseKernel
 {
   protected:
     std::string name_;
-    Real h_;           /**< reference smoothing length and its inverse **/
-    Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
+    Real h_;             /**< reference smoothing length and its inverse **/
+    Real kernel_size_;   /**<kernel_size_ *  h_ gives the zero kernel value */
+    Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
     /** Normalization factors for the kernel function  **/
     Real factor_w1d_, factor_w2d_, factor_w3d_;
     /** Auxiliary factors for the derivative of kernel function  **/
@@ -52,7 +53,7 @@ class BaseKernel
     void setDerivativeParameters();
 
   public:
-    BaseKernel(Real h, Real kernel_size, const std::string &name);
+    BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation = 1.0);
 };
 
 class KernelWendlandC2 : public BaseKernel
@@ -73,8 +74,10 @@ class KernelWendlandC2 : public BaseKernel
 class TabulatedRadialFunction;
 {
   public:
-    template <typename OriginalRadialFunction>
-    TabulatedFunction();
+    static const int resolution_ = 28;
+    static constexpr int data_size_ = resolution_ + 4;
+
+    TabulatedFunction(Real dq, std::array<Real, 4> delta_q, std::array<Real, 32> data);
     Real operator()(Real q) const;
     Real operator()(Real h_ratio, Real q) const
     {
@@ -82,8 +85,9 @@ class TabulatedRadialFunction;
     };
 
   protected:
-    Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
-    std::array<Real, 32> discreted_data_;
+    Real dq_;
+    std::array<Real, 4> delta_q_;
+    std::array<Real, data_size_> data_;
 };
 
 class WithinCutOff
@@ -105,25 +109,49 @@ class WithinCutOff
 
 class SmoothingKernel : public BaseKernel
 {
-    std::string name_;
-    Real h_;             /**< reference smoothing length **/
-    Real kernel_size_;   /**< generally 2.0, kernel_size_ *  h_ gives the zero kernel value */
-    Real truncation_;    /**< fraction of full support to obtain cut off radius */
-    Real cutoff_radius_; /** reference cut off radius, beyond this kernel value is neglected. **/
+    Real truncation_; /**< fraction of full support to obtain cut off radius */
 
     WithinCutOff within_cutoff_;                 /**< functor to check if particles are within cut off radius */
-    Real factor_w1d_, factor_w2d_, factor_w3d_;  /**< kernel value at origin for 1, 2 and 3d **/
     TabulatedRadialFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
     TabulatedRadialFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 
   public:
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel)
-        : BaseKernel(kernel){};
+        : BaseKernel(kernel), within_cutoff_(cutoff_radius_)
+    {
+        using resolution = TabulatedRadialFunction::resolution_;
+        using data_size = TabulatedRadialFunction::data_size_;
 
-    std::string Name() const { return name_; };
-    Real SmoothingLength() const { return h_; };
-    Real KernelSize() const { return kernel_size_; };
+        Real dq = KernelSize() / Real(resolution);
+
+        std::array<Real, 4> delta_q; // interpolation coefficients
+        delta_q[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
+        delta_q[1] = dq * (-1.0 * dq) * (-2.0 * dq);
+        delta_q[2] = (2.0 * dq) * dq * (-1.0 * dq);
+        delta_q[3] = (3.0 * dq) * (2.0 * dq) * dq;
+
+        std::array<Real, data_size> w1d_data, w2d_data, w3d_data;
+        std::array<Real, data_size> dw1d_data, dw2d_data, dw3d_data;
+        for (int i = 0; i < data_size; i++)
+        {
+            w1d_data[i] = factor_w1d_ * kernel.W(Real(i - 1) * dq_);
+            w2d_data[i] = factor_w2d_ * kernel.W(Real(i - 1) * dq_);
+            w3d_data[i] = factor_w3d_ * kernel.W(Real(i - 1) * dq_);
+
+            dw1d_data[i] = factor_w1d_ * kernel.dW(Real(i - 1) * dq_) / h_;
+            dw2d_data[i] = factor_w2d_ * kernel.dW(Real(i - 1) * dq_) / h_;
+            dw3d_data[i] = factor_w3d_ * kernel.dW(Real(i - 1) * dq_) / h_;
+        }
+
+        w1d_ = TabulatedRadialFunction(dq, delta_q, w1d_data);
+        w2d_ = TabulatedRadialFunction(dq, delta_q, w2d_data);
+        w3d_ = TabulatedRadialFunction(dq, delta_q, w3d_data);
+        dw1d_ = TabulatedRadialFunction(dq, delta_q, dw1d_data);
+        dw2d_ = TabulatedRadialFunction(dq, delta_q, dw2d_data);
+        dw3d_ = TabulatedRadialFunction(dq, delta_q, dw3d_data);
+    }
+
     WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
     Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };

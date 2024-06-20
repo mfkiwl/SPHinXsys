@@ -3,6 +3,9 @@
 namespace SPH
 {
 //=================================================================================================//
+TabulatedFunction::TabulatedFunction(Real dq, std::array<Real, 4> delta_q, std::array<Real, 32> data)
+    : dq_(dq), delta_q_(delta_q), data_(data) {}
+//=================================================================================================//
 Real TabulatedRadialFunction::operator()(Real q)
 {
     int location = (int)floor(q / dq_);
@@ -12,31 +15,32 @@ Real TabulatedRadialFunction::operator()(Real q)
     Real fraction_2 = fraction_1 - dq_;         // fraction_2 correspond to i+1
     Real fraction_3 = fraction_1 - 2 * dq_;     ////fraction_3 correspond to i+2
 
-    return (fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * discreted_data_[i - 1] +
-           (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * discreted_data_[i] +
-           (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * discreted_data_[i + 1] +
-           (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * discreted_data_[i + 2];
+    return (fraction_1 * fraction_2 * fraction_3) / delta_q_[0] * data_[i - 1] +
+           (fraction_0 * fraction_2 * fraction_3) / delta_q_[1] * data_[i] +
+           (fraction_0 * fraction_1 * fraction_3) / delta_q_[2] * data_[i + 1] +
+           (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
 }
 //=================================================================================================//
-BaseKernel::BaseKernel(Real h, Real kernel_size, const std::string &name)
-    : h_(h), kernel_size_(kernel_size), name_(name) {}
+BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation)
+    : name_(name), h_(h), kernel_size_(kernel_size),
+      cutoff_radius_(truncation * h * kernel_size) {}
 //=================================================================================================//
 void BaseKernel::setDerivativeParameters()
 {
-    factor_dW_1D_ = factor_W_1D_ / h_;
-    factor_dW_2D_ = factor_W_2D_ / h_;
-    factor_dW_3D_ = factor_W_3D_ / h_;
+    factor_dW_1D_ = factor_w1d_ / h_;
+    factor_dW_2D_ = factor_w2d_ / h_;
+    factor_dW_3D_ = factor_w3d_ / h_;
     factor_d2W_1D_ = factor_dW_1D_ / h_;
     factor_d2W_2D_ = factor_dW_2D_ / h_;
     factor_d2W_3D_ = factor_dW_3D_ / h_;
 }
 //=================================================================================================//
 KernelWendlandC2::KernelWendlandC2(Real h)
-    : BaseKernel(h, 2.0, "Wendland2CKernel")
+    : BaseKernel("Wendland2CKernel", h, 2.0)
 {
-    factor_W_1D_ = 3.0 / 4.0 / h_;
-    factor_W_2D_ = 7.0 / (4.0 * Pi) / h_ / h_;
-    factor_W_3D_ = 21.0 / (16.0 * Pi) / h_ / h_ / h_;
+    factor_w1d_ = 3.0 / 4.0 / h_;
+    factor_w2d_ = 7.0 / (4.0 * Pi) / h_ / h_;
+    factor_w3d_ = 21.0 / (16.0 * Pi) / h_ / h_ / h_;
     setDerivativeParameters();
 }
 //=================================================================================================//
