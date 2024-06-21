@@ -31,9 +31,6 @@
  * Also note, in order to generalize for different kernel types,
  * the kernel profiles is mapped onto an array so that the evaluation
  * process is dependent on an interpolation only.
- * As I am aiming offloading computation to GPU, all to-be-offloaded functions
- * are defined as independent function classes or functors.
- * In this sense, the SmoothingKernel class is actually a functor generator.
  * @author	Xiangyu Hu
  */
 
@@ -103,24 +100,21 @@ class SmoothingKernel : public BaseKernel
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel);
 
-    Real computeLatticeNumberDensity(Vec2d zero, Real particle_spacing);
-    Real computeLatticeNumberDensity(Vec3d zero, Real particle_spacing);
+    Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };
+    TabulatedFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
+    TabulatedFunction KernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw2d_; };
 
-    Real KernelAtOrigin(Vec2d zero) const { return factor_w2d_; };
-    TabulatedFunction KernelFunction(Vec2d zero) const { return w2d_; };
-    TabulatedFunction KernelDerivativeFunction(Vec2d zero) const { return dw2d_; };
+    Real KernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w3d_; };
+    TabulatedFunction KernelFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w3d_; };
+    TabulatedFunction KernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw3d_; };
 
-    Real KernelAtOrigin(Vec3d zero) const { return factor_w3d_; };
-    TabulatedFunction KernelFunction(Vec3d zero) const { return w3d_; };
-    TabulatedFunction KernelDerivativeFunction(Vec3d zero) const { return dw3d_; };
+    Real SurfaceKernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w1d_; };
+    TabulatedFunction SurfaceKerneFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w1d_; };
+    TabulatedFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return dw1d_; };
 
-    Real SurfaceKernelAtOrigin(Vec2d zero) const { return factor_w1d_; };
-    TabulatedFunction SurfaceKerneFunction(Vec2d zero) const { return w1d_; };
-    TabulatedFunction SurfaceKernelDerivativeFunction(Vec2d zero) const { return dw1d_; };
-
-    Real SurfaceKernelAtOrigin(Vec3d zero) const { return factor_w2d_; };
-    TabulatedFunction SurfaceKerneFunction(Vec3d zero) const { return w2d_; };
-    TabulatedFunction SurfaceKernelDerivativeFunction(Vec3d zero) const { return dw2d_; };
+    Real SurfaceKernelAtOrigin(TypeIdentity<Vec3d> empty_Vec3d) const { return factor_w2d_; };
+    TabulatedFunction SurfaceKerneFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return w2d_; };
+    TabulatedFunction SurfaceKernelDerivativeFunction(TypeIdentity<Vec3d> empty_Vec3d) const { return dw2d_; };
 
     Real LinearKernelAtOrigin() const { return factor_w1d_; };                  // only for 3D application
     TabulatedFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
