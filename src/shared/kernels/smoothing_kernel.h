@@ -67,8 +67,18 @@ class WendlandC2 : public BaseKernel
     explicit WendlandC2(Real h);
     virtual ~WendlandC2(){};
 
-    Real W(const Real q) const;
-    Real dW(const Real q) const;
+    Real W(Real q) const;
+    Real dW(Real q) const;
+};
+
+class LaguerreGauss : public BaseKernel
+{
+  public:
+    explicit LaguerreGauss(Real h);
+    virtual ~LaguerreGauss(){};
+
+    Real W(Real q) const;
+    Real dW(Real q) const;
 };
 
 const int KernelResolution = 20;
@@ -92,6 +102,18 @@ class TabulatedFunction
     Real inv_h_, dq_;
     std::array<Real, 4> delta_q_; // interpolation coefficients
     KernelDataArray data_;
+};
+
+class WithinCutOff
+{
+  public:
+    WithinCutOff(Real cutoff_radius)
+        : cutoff_radius_sqr_(cutoff_radius * cutoff_radius){};
+    bool operator()(Vecd &displacement) const;               // for constant smoothing length
+    bool operator()(Real h_ratio, Vecd &displacement) const; // for variable smoothing length
+
+  protected:
+    Real cutoff_radius_sqr_;
 };
 
 class SmoothingKernel : public BaseKernel
