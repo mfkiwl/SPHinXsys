@@ -6,6 +6,29 @@
 namespace SPH
 {
 //=================================================================================================//
+template <typename T>
+Real TabulatedFunction::operator()(Real distance, const T &displacement) const
+{
+    Real q = distance * inv_h_;
+    int location = (int)floor(q / dq_);
+    int i = location + 1;
+    Real fraction_1 = q - Real(location) * dq_; // fraction_1 correspond to i
+    Real fraction_0 = fraction_1 + dq_;         // fraction_0 correspond to i-1
+    Real fraction_2 = fraction_1 - dq_;         // fraction_2 correspond to i+1
+    Real fraction_3 = fraction_1 - 2 * dq_;     ////fraction_3 correspond to i+2
+
+    return (fraction_1 * fraction_2 * fraction_3) / delta_q_[0] * data_[i - 1] +
+           (fraction_0 * fraction_2 * fraction_3) / delta_q_[1] * data_[i] +
+           (fraction_0 * fraction_1 * fraction_3) / delta_q_[2] * data_[i + 1] +
+           (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
+}
+//=================================================================================================//
+template <typename T>
+Real TabulatedFunction::operator()(Real h_ratio, Real distance, const T &displacement) const
+{
+    return operator()(h_ratio *distance, displacement);
+}
+//=================================================================================================//
 template <typename KernelType>
 SmoothingKernel::SmoothingKernel(const KernelType &kernel)
     : BaseKernel(kernel)

@@ -83,7 +83,10 @@ class TabulatedFunction
 {
   public:
     TabulatedFunction(Real h, Real dq, KernelDataArray data);
-    Real operator()(Real distance) const;
+    template <typename T>
+    Real operator()(Real distance, const T &displacement) const;
+    template <typename T>
+    Real operator()(Real h_ratio, Real distance, const T &displacement) const;
 
   protected:
     Real inv_h_, dq_;
