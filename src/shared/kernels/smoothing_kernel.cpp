@@ -17,11 +17,6 @@ bool WithinCutOff::operator()(Vecd &displacement) const
     return displacement.squaredNorm() < cutoff_radius_sqr_ ? true : false;
 }
 //=================================================================================================//
-bool WithinCutOff::operator()(Real h_ratio, Vecd &displacement) const
-{
-    return (h_ratio * displacement).squaredNorm() < cutoff_radius_sqr_ ? true : false;
-}
-//=================================================================================================//
 BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation)
     : name_(name), h_(h), kernel_size_(kernel_size),
       cutoff_radius_(truncation * h * kernel_size) {}

@@ -95,8 +95,8 @@ class TabulatedFunction
     TabulatedFunction(Real h, Real dq, KernelDataArray data);
     template <typename T>
     Real operator()(Real distance, const T &displacement) const;
-    template <typename T>
-    Real operator()(Real h_ratio, Real distance, const T &displacement) const;
+    template <typename ScalingType, typename T>
+    Real operator()(const ScalingType &scaling, Real distance, const T &displacement) const;
 
   protected:
     Real inv_h_, dq_;
@@ -109,8 +109,9 @@ class WithinCutOff
   public:
     WithinCutOff(Real cutoff_radius)
         : cutoff_radius_sqr_(cutoff_radius * cutoff_radius){};
-    bool operator()(Vecd &displacement) const;               // for constant smoothing length
-    bool operator()(Real h_ratio, Vecd &displacement) const; // for variable smoothing length
+    bool operator()(Vecd &displacement) const; // for constant smoothing length
+    template <typename ScalingType>
+    bool operator()(const ScalingType &scaling, Vecd &displacement) const; // for variable smoothing length
 
   protected:
     Real cutoff_radius_sqr_;
@@ -125,23 +126,18 @@ class SmoothingKernel : public BaseKernel
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel);
 
-    Real KernelAtOrigin(Vec2d zero) const { return factor_w2d_; };
     TabulatedFunction KernelFunction(Vec2d zero) const { return w2d_; };
     TabulatedFunction KernelDerivativeFunction(Vec2d zero) const { return dw2d_; };
 
-    Real KernelAtOrigin(Vec3d zero) const { return factor_w3d_; };
     TabulatedFunction KernelFunction(Vec3d zero) const { return w3d_; };
     TabulatedFunction KernelDerivativeFunction(Vec3d zero) const { return dw3d_; };
 
-    Real SurfaceKernelAtOrigin(Vec2d zero) const { return factor_w1d_; };
     TabulatedFunction SurfaceKerneFunction(Vec2d zero) const { return w1d_; };
     TabulatedFunction SurfaceKernelDerivativeFunction(Vec2d zero) const { return dw1d_; };
 
-    Real SurfaceKernelAtOrigin(Vec3d zero) const { return factor_w2d_; };
     TabulatedFunction SurfaceKerneFunction(Vec3d zero) const { return w2d_; };
     TabulatedFunction SurfaceKernelDerivativeFunction(Vec3d zero) const { return dw2d_; };
 
-    Real LinearKernelAtOrigin() const { return factor_w1d_; };                  // only for 3D application
     TabulatedFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
     TabulatedFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };

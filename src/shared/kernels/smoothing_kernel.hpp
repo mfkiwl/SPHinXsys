@@ -23,10 +23,16 @@ Real TabulatedFunction::operator()(Real distance, const T &displacement) const
            (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
 }
 //=================================================================================================//
-template <typename T>
-Real TabulatedFunction::operator()(Real h_ratio, Real distance, const T &displacement) const
+template <typename ScalingType, typename T>
+Real TabulatedFunction::operator()(const ScalingType &scaling, Real distance, const T &displacement) const
 {
-    return operator()(h_ratio *distance, displacement);
+    return operator()(scaling.scaleLength(distance), displacement) * scaling.scaleVolume();
+}
+//=================================================================================================//
+template <typename ScalingType>
+bool WithinCutOff::operator()(const ScalingType &scaling, Vecd &displacement) const
+{
+    return (scaling.scaleLength(displacement)).squaredNorm() < cutoff_radius_sqr_ ? true : false;
 }
 //=================================================================================================//
 template <typename KernelType>
