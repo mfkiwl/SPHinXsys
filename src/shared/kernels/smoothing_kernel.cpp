@@ -49,4 +49,36 @@ Real WendlandC2::dW(const Real q) const
     return 0.625 * pow(q - 2.0, 3) * q;
 }
 //=================================================================================================//
+Real SmoothingKernel::computeLatticeNumberDensity(Vec2d zero, Real particle_spacing)
+{
+    Real sigma(0);
+    int search_depth = int(cutoff_radius_ / particle_spacing) + 1;
+    for (int j = -search_depth; j <= search_depth; ++j)
+        for (int i = -search_depth; i <= search_depth; ++i)
+        {
+            Vec2d particle_location(i * particle_spacing, j * particle_spacing);
+            Real distance = particle_location.norm();
+            if (distance < cutoff_radius_)
+                sigma += w2d_(distance);
+        }
+    return sigma;
+}
+//=================================================================================================//
+Real SmoothingKernel::computeLatticeNumberDensity(Vec3d zero, Real particle_spacing)
+{
+    Real sigma(0);
+    int search_depth = int(cutoff_radius_ / particle_spacing) + 1;
+    for (int k = -search_depth; k <= search_depth; ++k)
+        for (int j = -search_depth; j <= search_depth; ++j)
+            for (int i = -search_depth; i <= search_depth; ++i)
+            {
+                Vec3d particle_location(i * particle_spacing,
+                                        j * particle_spacing, k * particle_spacing);
+                Real distance = particle_location.norm();
+                if (distance < cutoff_radius_)
+                    sigma += w3d_(distance);
+            }
+    return sigma;
+}
+//=================================================================================================//
 } // namespace SPH
