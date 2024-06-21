@@ -83,36 +83,22 @@ class TabulatedFunction
 {
   public:
     TabulatedFunction(Real h, Real dq, KernelDataArray data);
-    Real operator()(Real q) const;               // for constant smoothing length
-    Real operator()(Real h_ratio, Real q) const; // for variable smoothing length
+    Real operator()(Real distance) const;
 
   protected:
     Real inv_h_, dq_;
     std::array<Real, 4> delta_q_; // interpolation coefficients
     KernelDataArray data_;
 };
-class WithinCutOff
-{
-  public:
-    WithinCutOff(Real rc_ref) : rc_ref_sqr_(rc_ref * rc_ref){};
-    bool operator()(Vecd &displacement) const;               // for constant smoothing length
-    bool operator()(Real h_ratio, Vecd &displacement) const; // for variable smoothing length
-
-  protected:
-    Real rc_ref_sqr_;
-};
 
 class SmoothingKernel : public BaseKernel
 {
-    WithinCutOff within_cutoff_;           /**< functor to check if particles are within cut off radius */
     TabulatedFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
     TabulatedFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 
   public:
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel);
-
-    WithinCutOff getWithinCutOff() const { return within_cutoff_; };
 
     Real KernelAtOrigin(TypeIdentity<Vec2d> empty_Vec2d) const { return factor_w2d_; };
     TabulatedFunction KernelFunction(TypeIdentity<Vec2d> empty_Vec2d) const { return w2d_; };
