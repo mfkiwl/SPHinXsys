@@ -28,6 +28,21 @@ Real TabulatedFunction::operator()(Real distance) const
            (fraction_0 * fraction_1 * fraction_2) / delta_q_[3] * data_[i + 2];
 }
 //=================================================================================================//
+Real TabulatedFunction::operator()(Real h_ratio, Real q) const
+{
+    return operator()(q *h_ratio);
+}
+//=================================================================================================//
+bool WithinCutOff::operator()(Vecd &displacement) const
+{
+    return displacement.squaredNorm() < rc_ref_sqr_ ? true : false;
+}
+//=================================================================================================//
+bool WithinCutOff::operator()(Real h_ratio, Vecd &displacement) const
+{
+    return (h_ratio * displacement).squaredNorm() < rc_ref_sqr_ ? true : false;
+}
+//=================================================================================================//
 BaseKernel::BaseKernel(const std::string &name, Real h, Real kernel_size, Real truncation)
     : name_(name), h_(h), kernel_size_(kernel_size),
       cutoff_radius_(truncation * h * kernel_size) {}
