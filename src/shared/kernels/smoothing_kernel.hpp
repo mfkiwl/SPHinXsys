@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename T>
-Real TabulatedFunction::operator()(Real distance, const T &displacement) const
+Real RadialFunction::operator()(Real distance, const T &displacement) const
 {
     Real q = distance * inv_h_;
     int location = (int)floor(q / dq_);
@@ -24,7 +24,7 @@ Real TabulatedFunction::operator()(Real distance, const T &displacement) const
 }
 //=================================================================================================//
 template <typename ScalingType, typename T>
-Real TabulatedFunction::operator()(const ScalingType &scaling, Real distance, const T &displacement) const
+Real RadialFunction::operator()(const ScalingType &scaling, Real distance, const T &displacement) const
 {
     return operator()(scaling.scaleLength(distance), displacement) * scaling.scaleVolume();
 }
@@ -59,12 +59,12 @@ SmoothingKernel::SmoothingKernel(const KernelType &kernel)
         dw3d_data[i] = factor_w3d_ * derivative / h_;
     }
 
-    w1d_ = TabulatedFunction(h_, dq, w1d_data);
-    w2d_ = TabulatedFunction(h_, dq, w2d_data);
-    w3d_ = TabulatedFunction(h_, dq, w3d_data);
-    dw1d_ = TabulatedFunction(h_, dq, dw1d_data);
-    dw2d_ = TabulatedFunction(h_, dq, dw2d_data);
-    dw3d_ = TabulatedFunction(h_, dq, dw3d_data);
+    w1d_ = RadialFunction(h_, dq, w1d_data);
+    w2d_ = RadialFunction(h_, dq, w2d_data);
+    w3d_ = RadialFunction(h_, dq, w3d_data);
+    dw1d_ = RadialFunction(h_, dq, dw1d_data);
+    dw2d_ = RadialFunction(h_, dq, dw2d_data);
+    dw3d_ = RadialFunction(h_, dq, dw3d_data);
 }
 //=================================================================================================//
 } // namespace SPH

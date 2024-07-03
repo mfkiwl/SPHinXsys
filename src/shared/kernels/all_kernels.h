@@ -29,13 +29,12 @@
 #ifndef ALL_KERNELS_H
 #define ALL_KERNELS_H
 
+#include "anisotropic_kernel.hpp"
 #include "kernel_cubic_B_spline.h"
 #include "kernel_hyperbolic.h"
 #include "kernel_laguerre_gauss.h"
 #include "kernel_tabulated.h"
 #include "kernel_wenland_c2.h"
-#include "anisotropic_kernel.hpp"
-#include "smoothing_kernel.h"
- 
+#include "smoothing_kernel.hpp"
 
 #endif // ALL_KERNELS_H

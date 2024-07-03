@@ -86,13 +86,13 @@ constexpr int KernelDataSize = KernelResolution + 4;
 using KernelDataArray = std::array<Real, KernelDataSize>;
 
 /**
- * @class TabulatedFunction
+ * @class RadialFunction
  * @brief Four-point Lagrangian interpolation is used to obtain kernel values.
  */
-class TabulatedFunction
+class RadialFunction
 {
   public:
-    TabulatedFunction(Real h, Real dq, KernelDataArray data);
+    RadialFunction(Real h, Real dq, KernelDataArray data);
     template <typename T>
     Real operator()(Real distance, const T &displacement) const;
     template <typename ScalingType, typename T>
@@ -119,28 +119,27 @@ class WithinCutOff
 
 class SmoothingKernel : public BaseKernel
 {
-    TabulatedFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
-    TabulatedFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
+    RadialFunction w1d_, w2d_, w3d_;    /**< kernel value for 1, 2 and 3d **/
+    RadialFunction dw1d_, dw2d_, dw3d_; /**< kernel derivative for 1, 2 and 3d **/
 
   public:
     template <typename KernelType>
     explicit SmoothingKernel(const KernelType &kernel);
 
-    TabulatedFunction KernelFunction(Vec2d zero) const { return w2d_; };
-    TabulatedFunction KernelDerivativeFunction(Vec2d zero) const { return dw2d_; };
+    RadialFunction KernelFunction(Vec2d zero) const { return w2d_; };
+    RadialFunction KernelDerivativeFunction(Vec2d zero) const { return dw2d_; };
 
-    TabulatedFunction KernelFunction(Vec3d zero) const { return w3d_; };
-    TabulatedFunction KernelDerivativeFunction(Vec3d zero) const { return dw3d_; };
+    RadialFunction KernelFunction(Vec3d zero) const { return w3d_; };
+    RadialFunction KernelDerivativeFunction(Vec3d zero) const { return dw3d_; };
 
-    TabulatedFunction SurfaceKerneFunction(Vec2d zero) const { return w1d_; };
-    TabulatedFunction SurfaceKernelDerivativeFunction(Vec2d zero) const { return dw1d_; };
+    RadialFunction SurfaceKerneFunction(Vec2d zero) const { return w1d_; };
+    RadialFunction SurfaceKernelDerivativeFunction(Vec2d zero) const { return dw1d_; };
 
-    TabulatedFunction SurfaceKerneFunction(Vec3d zero) const { return w2d_; };
-    TabulatedFunction SurfaceKernelDerivativeFunction(Vec3d zero) const { return dw2d_; };
+    RadialFunction SurfaceKerneFunction(Vec3d zero) const { return w2d_; };
+    RadialFunction SurfaceKernelDerivativeFunction(Vec3d zero) const { return dw2d_; };
 
-    TabulatedFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
-    TabulatedFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
+    RadialFunction LinearKernelFunction() const { return w1d_; };            // only for 3D application
+    RadialFunction LinearKernelDerivativeFunction() const { return dw1d_; }; // only for 3D application
 };
 } // namespace SPH
-#include "smoothing_kernel.hpp"
 #endif // SMOOTHING_KERNEL_H

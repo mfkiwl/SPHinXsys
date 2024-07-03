@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-TabulatedFunction::TabulatedFunction(Real h, Real dq, KernelDataArray data)
+RadialFunction::RadialFunction(Real h, Real dq, KernelDataArray data)
     : inv_h_(1.0 / h), dq_(dq), data_(data)
 {
     delta_q_[0] = (-1.0 * dq) * (-2.0 * dq) * (-3.0 * dq);
