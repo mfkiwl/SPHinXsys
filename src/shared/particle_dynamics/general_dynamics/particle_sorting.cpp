@@ -24,36 +24,28 @@ void SwapSortableParticleData::operator()(size_t *a, size_t *b)
     swap_particle_data_value_(index_a, index_b);
 }
 //=================================================================================================//
-ParticleSorting::ParticleSorting(BaseParticles &base_particles)
-    : base_particles_(base_particles),
-      original_id_(base_particles.ParticleOriginalIds()),
-      sorted_id_(base_particles.ParticleSortedIds()),
-      sequence_(base_particles.ParticleSequences()),
-      swap_sortable_particle_data_(base_particles), compare_(),
-      quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
-      quick_sort_particle_body_() {}
+SingleResolutionSequence::
+    SingleResolutionSequence(BaseParticles *base_particles, BaseCellLinkedList *cell_linked_list)
+    : cell_linked_list_(cell_linked_list) {}
 //=================================================================================================//
-void ParticleSorting::sortingParticleData(size_t *begin, size_t size)
+SizeT SingleResolutionSequence::operator()(const Vecd &position)
 {
-    quick_sort_particle_range_.begin_ = begin;
-    quick_sort_particle_range_.size_ = size;
-    parallel_for(quick_sort_particle_range_, quick_sort_particle_body_, ap);
-    updateSortedId();
+    return cell_linked_list->transferMeshIndexToMortonOrder(
+        cell_linked_list->CellIndexFromPosition(position));
 }
 //=================================================================================================//
-void ParticleSorting::updateSortedId()
+MultiResolutionSequence::
+    MultiResolutionSequence(BaseParticles *base_particles, BaseCellLinkedList *cell_linked_list)
+    : multi_level_cell_linked_list_(DynamicCast<MultilevelCellLinkedList>(this, cell_linked_list)),
+      mesh_levels_(multi_level_cell_linked_list_->getMeshLevels()),
+      kernel_(multi_level_cell_linked_list_->getKernel()),
+      h_ratio_(base_particles->getVariableDataByName<Real>("SmoothingLengthRatio")) {}
+//=================================================================================================//
+SizeT MultiResolutionSequence::operator()(const Vecd &position)
 {
-    size_t total_real_particles = base_particles_.TotalRealParticles();
-    parallel_for(
-        IndexRange(0, total_real_particles),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                sorted_id_[original_id_[i]] = i;
-            }
-        },
-        ap);
+    size_t level = multi_level_cell_linked_list_->getMeshLevel(kernel_->CutOffRadius(h_ratio_[i]));
+    return mesh_levels_[level]->transferMeshIndexToMortonOrder(
+        mesh_levels_[level]->CellIndexFromPosition(position));
 }
 //=================================================================================================//
 } // namespace SPH

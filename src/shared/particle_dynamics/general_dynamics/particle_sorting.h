@@ -29,8 +29,10 @@
 #ifndef PARTICLE_SORTING_H
 #define PARTICLE_SORTING_H
 
-#include "base_data_package.h"
-#include "sph_data_containers.h"
+#include "all_particle_dynamics.h"
+#include "base_general_dynamics.h"
+
+#include "cell_linked_list.h"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
@@ -196,8 +198,6 @@ struct QuickSortParticleBody
  */
 namespace SPH
 {
-class BaseParticles;
-
 struct SwapParticleDataValue
 {
     template <typename DataType>
@@ -245,36 +245,95 @@ class SwapSortableParticleData
     void operator()(size_t *a, size_t *b);
 };
 
-/**
- * @class ParticleSorting
- * @brief The class for sorting particle according a given sequence.
- */
-class ParticleSorting
+class SingleResolutionSequence
 {
-  protected:
-    BaseParticles &base_particles_;
-    size_t *original_id_;
-    size_t *sorted_id_;
-    size_t *sequence_;
-
-    /** using pointer because it is constructed after particles. */
-    SwapSortableParticleData swap_sortable_particle_data_;
-    CompareParticleSequence compare_;
-    tbb::interface9::QuickSortParticleRange<
-        size_t *, CompareParticleSequence, SwapSortableParticleData>
-        quick_sort_particle_range_;
-    tbb::interface9::QuickSortParticleBody<
-        size_t *, CompareParticleSequence, SwapSortableParticleData>
-        quick_sort_particle_body_;
+    CellLinkedList *cell_linked_list_;
 
   public:
-    // the construction is before particles
-    explicit ParticleSorting(BaseParticles &base_particles);
+    SingleResolutionSequence(BaseParticles *base_particles, BaseCellLinkedList *cell_linked_list);
+    SizeT operator()(const Vecd *position);
+};
+
+class MultiResolutionSequence
+{
+    MultilevelCellLinkedList *multi_level_cell_linked_list_;
+    StdVec<CellLinkedList *> mesh_levels_;
+    Kernel *kernel_;
+    Real *h_ratio_;
+
+  public:
+    SingleResolutionSequence(BaseParticles *base_particles, BaseCellLinkedList *cell_linked_list);
+    SizeT operator()(const Vecd *position);
+};
+
+template <typename SequenceMethodType, class ExecutionPolicy>
+ParticleSorting : public BaseDynamics<void>
+{
+    class ComputingSequences : public LocalDynamics, public DataDelegateSimple
+    {
+      protected:
+        SequenceMethodType sequence_method_;
+        Vecd *pos_;
+        size_t *sequence_;
+
+      public:
+        ComputingSequences(RealBody &real_body);
+        virtual ~ComputingSequences(){};
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
+    class SortingParticleData : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+    {
+      protected:
+        size_t *sequence_;
+        size_t *sorted_id_;
+        /** using pointer because it is constructed after particles. */
+        SwapSortableParticleData swap_sortable_particle_data_;
+        CompareParticleSequence compare_;
+        tbb::interface9::QuickSortParticleRange<
+            size_t *, CompareParticleSequence, SwapSortableParticleData>
+            quick_sort_particle_range_;
+        tbb::interface9::QuickSortParticleBody<
+            size_t *, CompareParticleSequence, SwapSortableParticleData>
+            quick_sort_particle_body_;
+
+      public:
+        // the construction is before particles
+        explicit SortingParticleData(RealBody &real_body);
+        virtual ~SortingParticleData(){};
+        /** sorting particle data according to the cell location of particles */
+        virtual void exec(Real dt = 0.0) override;
+        /** update the reference of sorted data from original data */
+        virtual void updateSortedId();
+    };
+
+    class UpdateSortedId : public LocalDynamics, public DataDelegateSimple
+    {
+      protected:
+        size_t *original_id_;
+        size_t *sorted_id_;
+
+      public:
+        UpdateSortedId(RealBody &real_body);
+        virtual ~UpdateSortedId(){};
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
+  protected:
+    SimpleDynamics<ComputingSequences, ExecutionPolicy> computing_sequences_;
+    SortingParticleData sorting_particle_data_;
+    SimpleDynamics<UpdateSortedId, ExecutionPolicy> update_sorted_id_;
+
+  public:
+    explicit ParticleSorting(RealBody & real_body);
     virtual ~ParticleSorting(){};
-    /** sorting particle data according to the cell location of particles */
-    virtual void sortingParticleData(size_t *begin, size_t size);
-    /** update the reference of sorted data from original data */
-    virtual void updateSortedId();
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        computing_sequences_.exec();
+        sorting_particle_data_.exec();
+        update_sorted_id_.exec();
+    };
 };
 } // namespace SPH
 #endif // PARTICLE_SORTING_H
