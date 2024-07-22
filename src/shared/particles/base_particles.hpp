@@ -44,6 +44,7 @@ DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable
     return data_field;
 }
 //=================================================================================================//
+<<<<<<< HEAD
 template <typename DataType, class InitializationFunction>
 DataType *BaseParticles::
     initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
@@ -66,6 +67,8 @@ DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &
     return variable->DataField();
 }
 //=================================================================================================//
+=======
+>>>>>>> refactory/size_t_registered_too
 template <typename DataType>
 DataType *BaseParticles::registerSingleVariable(const std::string &name, DataType initial_value)
 {
@@ -116,7 +119,10 @@ DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&
     {
         initializeVariable(variable, std::forward<Args>(args)...);
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(all_particle_data_).push_back(variable->DataField());
+        if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
+        {
+            std::get<type_index>(all_state_data_).push_back(variable->DataField());
+        }
     }
 
     return variable->DataField();
@@ -256,8 +262,13 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
+<<<<<<< HEAD
 void BaseParticles::CopyParticleData::
 operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)
+=======
+void BaseParticles::CopyParticleState::
+operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index)
+>>>>>>> refactory/size_t_registered_too
 {
     for (size_t i = 0; i != data_keeper.size(); ++i)
     {

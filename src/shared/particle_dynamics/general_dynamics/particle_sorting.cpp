@@ -10,7 +10,6 @@ namespace SPH
 //=================================================================================================//
 SwapSortableParticleData::SwapSortableParticleData(BaseParticles &base_particles)
     : sequence_(base_particles.ParticleSequences()),
-      original_id_(base_particles.ParticleOriginalIds()),
       sortable_data_(base_particles.SortableParticleData()),
       swap_particle_data_value_(sortable_data_) {}
 //=================================================================================================//
@@ -18,9 +17,8 @@ void SwapSortableParticleData::operator()(size_t *a, size_t *b)
 {
     std::swap(*a, *b);
 
-    size_t index_a = a - sequence_;
-    size_t index_b = b - sequence_;
-    std::swap(original_id_[index_a], original_id_[index_b]);
+    size_t index_a = a - sequence_.data();
+    size_t index_b = b - sequence_.data();
     swap_particle_data_value_(index_a, index_b);
 }
 //=================================================================================================//

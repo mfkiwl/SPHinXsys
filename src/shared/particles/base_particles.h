@@ -82,8 +82,12 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
+<<<<<<< HEAD
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
     UniquePtrsKeeper<Entity> unregistered_variable_ptrs_;
+=======
+    DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
+>>>>>>> refactory/size_t_registered_too
     UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
@@ -223,7 +227,7 @@ class BaseParticles
     BaseMaterial &base_material_;
     XmlParser restart_xml_parser_;
     XmlParser reload_xml_parser_;
-    ParticleData all_particle_data_;
+    ParticleData all_state_data_; /**< all discrete variable data except those on particle IDs  */
     ParticleVariables all_discrete_variables_;
     SingleVariables all_single_variables_;
     ParticleVariables variables_to_write_;
@@ -238,7 +242,7 @@ class BaseParticles
     // assembled variables and data sets
     //----------------------------------------------------------------------
   protected:
-    struct CopyParticleData
+    struct CopyParticleState
     {
         template <typename DataType>
         void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index);
@@ -262,7 +266,7 @@ class BaseParticles
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
     };
 
-    OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
+    OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
 };
