@@ -101,7 +101,8 @@ class MultiPolygonShape : public Shape
 
   public:
     /** Default constructor. */
-    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
+    explicit MultiPolygonShape(const std::string &shape_name = "MultiPolygonShape")
+        : Shape(shape_name){};
     explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
         : Shape(shape_name), multi_polygon_(multi_polygon){};
     virtual ~MultiPolygonShape(){};

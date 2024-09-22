@@ -8,20 +8,29 @@ namespace SPH
 {
 //=================================================================================================//
 LevelSetShape::
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
-    : Shape(shape.getName()), sph_adaptation_(sph_adaptation),
-      level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement_ratio)))
+    LevelSetShape(SharedPtr<Shape> shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
+    : Shape(shape->getName()), sph_adaptation_(sph_adaptation),
+      level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(*shape, refinement_ratio)))
 {
-    bounding_box_ = shape.getBounds();
+    bounding_box_ = shape->getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
-    : Shape(shape.getName()),
+LevelSetShape::LevelSetShape(SPHBody &sph_body, SharedPtr<Shape> shape, Real refinement_ratio)
+    : Shape(shape->getName()),
       level_set_(*level_set_keeper_.movePtr(
-          sph_body.sph_adaptation_->createLevelSet(shape, refinement_ratio)))
+          sph_body.sph_adaptation_->createLevelSet(*shape, refinement_ratio)))
 {
-    bounding_box_ = shape.getBounds();
+    bounding_box_ = shape->getBounds();
+    is_bounds_found_ = true;
+}
+//=================================================================================================//
+LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape *shape, Real refinement_ratio)
+    : Shape(shape->getName()),
+      level_set_(*level_set_keeper_.movePtr(
+          sph_body.sph_adaptation_->createLevelSet(*shape, refinement_ratio)))
+{
+    bounding_box_ = shape->getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//

@@ -36,7 +36,7 @@ BaseParticles &SPHBody::getBaseParticles()
 {
     if (base_particles_ == nullptr)
     {
-        std::cout << "\n Error: BaseParticle not constructed yet! \n";
+        std::cout << "\n Error: BaseParticle of body: " << body_name_ << " not constructed yet! \n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }

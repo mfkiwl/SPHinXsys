@@ -88,7 +88,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
-    WaveBlock wave_block_shape("WaveBlock");
+    WaveBlock wave_block_shape("WaveBody");
     FluidBody wave_body(sph_system, wave_block_shape.getName());
     wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
     wave_body.generateParticles<BaseParticles, Lattice>(wave_block_shape);

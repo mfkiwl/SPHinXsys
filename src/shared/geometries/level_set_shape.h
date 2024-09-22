@@ -50,8 +50,9 @@ class LevelSetShape : public Shape
 
   public:
     /** refinement_ratio is between body reference resolution and level set resolution */
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(SharedPtr<Shape> shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSetShape(SPHBody &sph_body, SharedPtr<Shape> shape, Real refinement_ratio = 1.0);
+    LevelSetShape(SPHBody &sph_body, Shape *shape, Real refinement_ratio = 1.0);
 
     virtual ~LevelSetShape(){};
 

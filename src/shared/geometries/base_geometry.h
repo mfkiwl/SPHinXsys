@@ -68,7 +68,7 @@ class Shape
     explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false){};
     virtual ~Shape(){};
 
-    std::string getName() { return name_; };
+    std::string getName() const { return name_; };
     void setName(const std::string &name) { name_ = name; };
     BoundingBox getBounds();
     virtual bool isValid() { return true; };
@@ -105,7 +105,7 @@ class BinaryShapes : public Shape
     virtual ~BinaryShapes(){};
 
     template <class SubShapeType, typename... Args>
-    void add(Args &&... args)
+    void add(Args &&...args)
     {
         Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
@@ -113,7 +113,7 @@ class BinaryShapes : public Shape
     };
 
     template <class SubShapeType, typename... Args>
-    void subtract(Args &&... args)
+    void subtract(Args &&...args)
     {
         Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);
