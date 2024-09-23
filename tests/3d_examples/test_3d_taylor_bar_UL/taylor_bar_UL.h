@@ -22,17 +22,17 @@ int resolution(20);
 //	Material properties and global parameters
 //----------------------------------------------------------------------
 Real rho0_s = 2700.0; /**< Reference density. */
-Real poisson = 0.3;  /**< Poisson ratio. */
+Real poisson = 0.3;   /**< Poisson ratio. */
 Real Youngs_modulus = 78.2e9;
 Real yield_stress = 0.29e9;
 Real vel_0 = 373.0;
 Real U_max = vel_0;
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
 /** Define the wall. */
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
         Vecd translation_holder(0.0, 0.0, -0.5 * SL);
@@ -42,12 +42,12 @@ class WallBoundary : public ComplexShape
 /** Define the body. */
 class Column : public ComplexShape
 {
-public:
-    explicit Column(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
         add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
-            0.5 * PW, resolution, translation_column);
+                                       0.5 * PW, resolution, translation_column);
     }
 };
 /**

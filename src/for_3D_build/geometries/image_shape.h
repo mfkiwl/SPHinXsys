@@ -45,7 +45,7 @@ namespace SPH
 class ImageShape : public Shape
 {
   public:
-    explicit ImageShape(const std::string &shape_name)
+    explicit ImageShape(const std::string &shape_name = "")
         : Shape(shape_name), translation_(Vecd::Zero()), rotation_(Matd::Identity()),
           max_distance_(-INFINITY), min_distance_(INFINITY){};
 
@@ -66,7 +66,7 @@ class ImageShapeFromFile : public ImageShape
 {
   public:
     explicit ImageShapeFromFile(const std::string &file_path_name,
-                                const std::string &shape_name = "ImageShapeFromFile");
+                                const std::string &shape_name = "");
     virtual ~ImageShapeFromFile(){};
 };
 
@@ -74,7 +74,7 @@ class ImageShapeSphere : public ImageShape
 {
   public:
     ImageShapeSphere(Real radius, Vecd spacings, Vecd center,
-                     const std::string &shape_name = "ImageShapeSphere");
+                     const std::string &shape_name = "");
     virtual ~ImageShapeSphere(){};
 };
 } // namespace SPH

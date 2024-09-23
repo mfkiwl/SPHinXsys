@@ -49,10 +49,10 @@ class UpperBoundary : public ComplexShape
         add<TransformShape<GeometricShapeBox>>(Transform(translate_to_position), scaled_container);
     }
 };
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         Vecd scaled_container_outer(0.5 * width + boundary_width, 0.5 * height + boundary_width);
         Vecd scaled_container(0.5 * width + 2.0 * boundary_width, 0.5 * height);
@@ -125,8 +125,8 @@ int main(int ac, char *av[])
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------

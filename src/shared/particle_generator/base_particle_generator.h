@@ -37,6 +37,7 @@
 
 #include "all_particles.h"
 #include "base_data_package.h"
+#include "base_geometry.h"
 #include "large_data_containers.h"
 #include "sphinxsys_containers.h"
 

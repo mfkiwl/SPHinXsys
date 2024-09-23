@@ -30,10 +30,10 @@
 #ifndef ALL_GEOMETRIES_H
 #define ALL_GEOMETRIES_H
 
-#include "complex_shape.h"
-#include "mapping_shape.h"
+#include "aligned_box_shape.h"
 #include "geometric_shape.h"
 #include "level_set_shape.h"
+#include "mapping_shape.h"
 #include "multi_polygon_shape.h"
 #include "transform_shape.h"
 

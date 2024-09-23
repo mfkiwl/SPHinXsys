@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     MultiPolygonShape diffusion_body_shape(createOverallStructureBody(), "DiffusionBody");
-    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
+    SolidBody diffusion_body(sph_system, "DiffusionBody");
     LocalIsotropicDiffusion *frame_diffusion = diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", pvc_cond);
     diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 

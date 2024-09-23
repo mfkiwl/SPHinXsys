@@ -60,7 +60,7 @@ std::vector<Vecd> CreateInnerWallShape()
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer, water_inlet_shape);
 
-    WallBoundary wall_boundary_shape("Wall");
+    WallBoundaryShape wall_boundary_shape("Wall");
     SolidBody wall(sph_system, wall_boundary_shape.getName());
     wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

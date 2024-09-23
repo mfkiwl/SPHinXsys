@@ -46,12 +46,12 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
     return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 }
 //=================================================================================================//
-bool BinaryShapes::isValid()
+bool ComplexShape::isValid()
 {
     return sub_shapes_and_ops_.size() == 0 ? false : true;
 }
 //=================================================================================================//
-BoundingBox BinaryShapes::findBounds()
+BoundingBox ComplexShape::findBounds()
 {
     // initial reference values
     Vecd lower_bound = MaxReal * Vecd::Ones();
@@ -69,7 +69,7 @@ BoundingBox BinaryShapes::findBounds()
     return BoundingBox(lower_bound, upper_bound);
 }
 //=================================================================================================//
-bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
+bool ComplexShape::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
 {
     bool exist = false;
     bool inside = false;
@@ -103,7 +103,7 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
     return exist;
 }
 //=================================================================================================//
-Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
+Vecd ComplexShape::findClosestPoint(const Vecd &probe_point)
 {
     // a big positive number
     Real large_number(MaxReal);
@@ -127,7 +127,7 @@ Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
     return pnt_closest;
 }
 //=================================================================================================//
-SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &name)
+SubShapeAndOp *ComplexShape::getSubShapeAndOpByName(const std::string &name)
 {
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
@@ -141,12 +141,12 @@ SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &name)
     return nullptr;
 }
 //=================================================================================================//
-Shape *BinaryShapes::getSubShapeByName(const std::string &name)
+Shape *ComplexShape::getSubShapeByName(const std::string &name)
 {
     return getSubShapeAndOpByName(name)->first;
 }
 //=================================================================================================//
-size_t BinaryShapes::getSubShapeIndexByName(const std::string &name)
+size_t ComplexShape::getSubShapeIndexByName(const std::string &name)
 {
     for (size_t index = 0; index != sub_shapes_and_ops_.size(); ++index)
     {

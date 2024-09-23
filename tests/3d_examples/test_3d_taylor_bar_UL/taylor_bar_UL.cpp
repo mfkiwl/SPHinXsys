@@ -21,7 +21,7 @@ int main(int ac, char *av[])
         ? column.generateParticles<BaseParticles, Reload>(column.getName())
         : column.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    WallBoundary wall_boundary_shape("Wall");
+    WallBoundaryShape wall_boundary_shape("Wall");
     SolidBody wall_boundary(system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

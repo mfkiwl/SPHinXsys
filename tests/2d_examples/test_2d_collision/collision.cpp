@@ -35,7 +35,7 @@ Real physical_viscosity = 10000.0;
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         std::vector<Vecd> outer_wall_shape;
         outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -102,9 +102,9 @@ int main(int ac, char *av[])
         ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.getName())
         : damping_ball.generateParticles<BaseParticles, Lattice>(damping_ball_level_set);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");

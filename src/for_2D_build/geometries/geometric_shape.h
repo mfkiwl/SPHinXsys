@@ -38,7 +38,7 @@ class GeometricShapeBox : public Shape
 {
   public:
     explicit GeometricShapeBox(const Vec2d &halfsize,
-                               const std::string &shape_name = "GeometricShapeBox");
+                               const std::string &shape_name = "");
     virtual ~GeometricShapeBox(){};
 
     virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
@@ -58,7 +58,7 @@ class GeometricShapeBall : public Shape
 
   public:
     explicit GeometricShapeBall(const Vec2d &center, Real radius,
-                                const std::string &shape_name = "GeometricShapeBall");
+                                const std::string &shape_name = "");
     virtual ~GeometricShapeBall(){};
 
     virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;

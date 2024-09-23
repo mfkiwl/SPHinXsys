@@ -213,7 +213,7 @@ class WaterBlock : public MultiPolygonShape
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);

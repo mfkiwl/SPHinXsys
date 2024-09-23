@@ -65,7 +65,7 @@ class Shape
   public:
     BoundingBox bounding_box_;
 
-    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false){};
+    explicit Shape(const std::string &shape_name = "") : name_(shape_name), is_bounds_found_(false){};
     virtual ~Shape(){};
 
     std::string getName() const { return name_; };
@@ -91,18 +91,23 @@ class Shape
 
 using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 /**
- * @class BinaryShapes
+ * @class ComplexShape
  * @brief A collections of shapes with binary operations.
  * This class has ownership of all shapes by using a unique pointer vector.
  * In this way, add or subtract a shape will call the shape's constructor other than
  * passing the shape pointer.
+ * For now, if the level set shape (for particle relaxation)
+ * will be generated from the complex shape,
+ * partially overlapped shapes are not allowed for 3D problems.
+ * However, if only the contain function
+ * is used, for example generating particles using lattice generator,
+ * partially overlapped shapes are allowed.
  */
-class BinaryShapes : public Shape
+class ComplexShape : public Shape
 {
   public:
-    BinaryShapes() : Shape("BinaryShapes"){};
-    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name){};
-    virtual ~BinaryShapes(){};
+    explicit ComplexShape(const std::string &shape_name = "") : Shape(shape_name){};
+    virtual ~ComplexShape(){};
 
     template <class SubShapeType, typename... Args>
     void add(Args &&...args)

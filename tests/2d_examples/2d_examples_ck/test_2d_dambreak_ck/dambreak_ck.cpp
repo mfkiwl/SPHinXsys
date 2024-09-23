@@ -34,10 +34,10 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 //	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
@@ -57,14 +57,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
-    FluidBody water_block(sph_system, initial_water_block.getName());
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    TransformShape<GeometricShapeBox> initial_water_block(Transform(water_block_translation), water_block_halfsize);
     water_block.generateParticles<BaseParticles, Lattice>(initial_water_block);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

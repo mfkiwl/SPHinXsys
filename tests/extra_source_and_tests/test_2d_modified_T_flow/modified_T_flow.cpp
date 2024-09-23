@@ -128,7 +128,7 @@ class WaterBlock : public MultiPolygonShape
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -156,8 +156,8 @@ int main(int ac, char *av[])
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer, water_block_shape);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 

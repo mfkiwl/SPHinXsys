@@ -29,8 +29,7 @@ Real heat_capacity_ratio = 1.4; /**< heat capacity ratio. */
 class WaveBlock : public MultiPolygonShape
 {
   public:
-    explicit WaveBlock(const std::string &body_name)
-        : MultiPolygonShape(body_name)
+    WaveBlock() : MultiPolygonShape()
     {
         std::vector<Vecd> waves_block_shape{
             Vecd(-2.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, DH), Vecd(3.0 / 5.0 * DL, DH),
@@ -88,9 +87,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
-    WaveBlock wave_block_shape("WaveBody");
-    FluidBody wave_body(sph_system, wave_block_shape.getName());
+    FluidBody wave_body(sph_system, "WaveBody");
     wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
+    WaveBlock wave_block_shape;
     wave_body.generateParticles<BaseParticles, Lattice>(wave_block_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -79,10 +79,10 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
 //----------------------------------------------------------------------
 //	Dependent geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);

@@ -100,10 +100,10 @@ class WaterBlock : public ComplexShape
 //----------------------------------------------------------------------
 //	Wall geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         Vecd halfsize_wall_outer(0.5 * DW + BW, 0.5 * DL + BW, 0.5 * DH + BW);
         Vecd wall_outer_pos(0.5 * DW, 0.5 * DL, 0.5 * DH);

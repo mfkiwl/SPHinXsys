@@ -28,7 +28,7 @@ Real poisson = 0.45;
 class ShellShape : public ComplexShape
 {
   public:
-    explicit ShellShape(const std::string &shape_name) : ComplexShape(shape_name)
+    ShellShape() : ComplexShape()
     {
         add<GeometricShapeBall>(shell_shape_center, shell_shape_radius + thickness);
         subtract<GeometricShapeBall>(shell_shape_center, shell_shape_radius);
@@ -55,9 +55,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    GeometricShapeBall ball_shape(ball_center, ball_radius, "BallBody");
-    SolidBody ball(sph_system, ball_shape.getName());
-    LevelSetShape ball_level_set_shape(ball, ball_shape, 1.0);
+    SolidBody ball(sph_system, "BallBody");
+    LevelSetShape ball_level_set_shape(ball, makeShared<GeometricShapeBall>(ball_center, ball_radius));
     ball_level_set_shape.writeLevelSet(sph_system);
     ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (sph_system.ReloadParticles())
@@ -69,8 +68,7 @@ int main(int ac, char *av[])
         ball.generateParticles<BaseParticles, Lattice>(ball_level_set_shape);
     }
 
-    ShellShape shell_shape("RigidShell");
-    SolidBody rigid_shell(sph_system, shell_shape.getName());
+    SolidBody rigid_shell(sph_system, "RigidShell");
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     rigid_shell.defineMaterial<Solid>();
     if (sph_system.ReloadParticles())
@@ -91,7 +89,7 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-        LevelSetShape shell_level_set_shape(rigid_shell, shell_shape, level_set_refinement_ratio);
+        LevelSetShape shell_level_set_shape(rigid_shell, makeShared<ShellShape>(), level_set_refinement_ratio);
         shell_level_set_shape.writeLevelSet(sph_system);
         rigid_shell.generateParticles<SurfaceParticles, Lattice>(shell_level_set_shape, thickness);
         //----------------------------------------------------------------------

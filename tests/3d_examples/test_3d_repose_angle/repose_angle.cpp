@@ -36,10 +36,10 @@ class SoilBlock : public ComplexShape
     }
 };
 //	define the static solid wall boundary shape
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         Vecd outer_wall_halfsize = Vecd(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vecd outer_wall_translation = Vecd(-BW, -BW, -BW) + outer_wall_halfsize;
@@ -93,8 +93,8 @@ int main(int ac, char *av[])
         ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
         : soil_block.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------

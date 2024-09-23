@@ -79,7 +79,7 @@ class FluidBlock : public MultiPolygonShape
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         std::vector<Vecd> pnts3;
         pnts3.push_back(Vecd(-0.5 * DL - BW, -0.5 * DH - BW));
@@ -136,8 +136,8 @@ int main(int ac, char *av[])
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block_shape.getBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x, fluid_block_shape);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 

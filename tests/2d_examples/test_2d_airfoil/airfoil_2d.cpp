@@ -27,7 +27,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 class ImportModel : public MultiPolygonShape
 {
   public:
-    explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
+    ImportModel() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
         multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
@@ -48,10 +48,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    ImportModel airfoil_shape("AirFoil");
-    RealBody airfoil(sph_system, airfoil_shape.getName());
+    RealBody airfoil(sph_system, "AirFoil");
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    LevelSetShape airfoil_level_set(airfoil, airfoil_shape, 1.0);
+    LevelSetShape airfoil_level_set(airfoil, makeShared<ImportModel>());
     airfoil_level_set.cleanLevelSet()->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, Adaptive>(airfoil_level_set);
     //----------------------------------------------------------------------

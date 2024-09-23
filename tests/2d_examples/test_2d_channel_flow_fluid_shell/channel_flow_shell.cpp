@@ -28,8 +28,7 @@ namespace SPH
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    class FluidAxialObserver;
-    explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock(const std::vector<Vecd> &shape) : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
     }
@@ -166,9 +165,9 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape = WaterBlock(createWaterBlockShape(), "WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape(createWaterBlockShape());
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     SolidBody wall_boundary(sph_system, "Wall");

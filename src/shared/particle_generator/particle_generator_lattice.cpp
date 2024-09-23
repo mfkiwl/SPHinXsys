@@ -2,7 +2,6 @@
 
 #include "adaptation.h"
 #include "base_body.h"
-#include "complex_shape.h"
 
 namespace SPH
 {

@@ -1,4 +1,4 @@
-#include "complex_shape.h"
+#include "aligned_box_shape.h"
 
 namespace SPH
 {

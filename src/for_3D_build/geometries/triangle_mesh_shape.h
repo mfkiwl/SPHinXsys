@@ -90,9 +90,9 @@ class TriangleMeshShapeBrick : public TriangleMeshShape
         int resolution_;
     };
     explicit TriangleMeshShapeBrick(Vec3d halfsize, int resolution, Vec3d translation,
-                                    const std::string &shape_name = "TriangleMeshShapeBrick");
+                                    const std::string &shape_name = "");
     explicit TriangleMeshShapeBrick(const TriangleMeshShapeBrick::ShapeParameters &shape_parameters,
-                                    const std::string &shape_name = "TriangleMeshShapeBrick");
+                                    const std::string &shape_name = "");
     virtual ~TriangleMeshShapeBrick(){};
 };
 
@@ -104,7 +104,7 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
 {
   public:
     explicit TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
-                                     const std::string &shape_name = "TriangleMeshShapeSphere");
+                                     const std::string &shape_name = "");
     virtual ~TriangleMeshShapeSphere(){};
 };
 
@@ -116,7 +116,7 @@ class TriangleMeshShapeCylinder : public TriangleMeshShape
 {
   public:
     explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation,
-                                       const std::string &shape_name = "TriangleMeshShapeCylinder");
+                                       const std::string &shape_name = "");
     virtual ~TriangleMeshShapeCylinder(){};
 };
 
@@ -128,7 +128,7 @@ class TriangleMeshShapeSTL : public TriangleMeshShape
 {
   public:
     explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
-                                  const std::string &shape_name = "TriangleMeshShapeSTL");
+                                  const std::string &shape_name = "");
     virtual ~TriangleMeshShapeSTL(){};
 
     /** Here, we use the open source method TriangleMeshDistance library.

@@ -21,7 +21,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     DiffusionBody diffusion_body_shape("DiffusionBody");
-    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
+    SolidBody diffusion_body(sph_system, "DiffusionBody");
     IsotropicDiffusion *diffusion =
         diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);

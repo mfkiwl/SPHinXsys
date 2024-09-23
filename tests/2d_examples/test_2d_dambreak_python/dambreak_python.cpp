@@ -42,10 +42,10 @@ class Parameter
 //	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape, public Parameter
+class WallBoundaryShape : public ComplexShape, public Parameter
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
@@ -62,7 +62,7 @@ class PreSettingCase : public Parameter
     IOEnvironment io_environment;
     TransformShape<GeometricShapeBox> water_block_shape;
     FluidBody water_block;
-    WallBoundary wall_boundary_shape;
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary;
     StdVec<Vecd> observation_location;
     ObserverBody fluid_observer;

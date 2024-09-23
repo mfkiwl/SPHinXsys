@@ -32,42 +32,10 @@
 
 #include "base_geometry.h"
 #include "geometric_shape.h"
-#include "level_set_shape.h"
 #include "transform_shape.h"
 
 namespace SPH
 {
-class LevelSetShape;
-
-/**
- * @class ComplexShape
- * @brief  For now, if the level set shape (for particle relaxation)
- * will be generated from the complex shape,
- * partially overlapped shapes are not allowed for 3D problems.
- * However, if only the contain function
- * is used, for example generating particles using lattice generator,
- * partially overlapped shapes are allowed.
- **/
-class ComplexShape : public BinaryShapes
-{
-  public:
-    explicit ComplexShape(const std::string &shape_name)
-        : BinaryShapes(shape_name){};
-    virtual ~ComplexShape(){};
-
-    template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
-    {
-        size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
-            sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
-        sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
-        return level_set_shape;
-    };
-};
-
-using DefaultShape = ComplexShape;
-
 /**
  * @class AlignedBoxShape
  * @brief Used to describe a bounding box in which

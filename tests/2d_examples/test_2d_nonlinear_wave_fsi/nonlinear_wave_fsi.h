@@ -368,7 +368,7 @@ class WaterBlock : public MultiPolygonShape
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;

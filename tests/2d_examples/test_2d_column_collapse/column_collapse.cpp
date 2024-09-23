@@ -40,24 +40,23 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
 //	Complex for wall boundary
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
+class WallBoundaryShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    WallBoundaryShape() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
-std::vector<Vecd> soil_shape{
-    Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0)};
 
-class Soil : public MultiPolygonShape
+class SoilBlockShape : public MultiPolygonShape
 {
   public:
-    explicit Soil(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    SoilBlockShape() : MultiPolygonShape()
     {
-        multi_polygon_.addAPolygon(soil_shape, ShapeBooleanOps::add);
+        std::vector<Vecd> key_points{Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0)};
+        multi_polygon_.addAPolygon(key_points, ShapeBooleanOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -73,14 +72,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    Soil soil_block_shape("GranularBody");
-    RealBody soil_block(sph_system, soil_block_shape.getName());
+    RealBody soil_block(sph_system, "GranularBody");
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    SoilBlockShape soil_block_shape;
     soil_block.generateParticles<BaseParticles, Lattice>(soil_block_shape);
 
-    WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -37,7 +37,7 @@ namespace SPH
 class GeometricShape : public Shape
 {
   public:
-    explicit GeometricShape(const std::string &shape_name)
+    explicit GeometricShape(const std::string &shape_name = "")
         : Shape(shape_name), contact_geometry_(nullptr){};
 
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
@@ -56,7 +56,7 @@ class GeometricShapeBox : public GeometricShape
 
   public:
     explicit GeometricShapeBox(const Vecd &halfsize,
-                               const std::string &shape_name = "GeometricShapeBox");
+                               const std::string &shape_name = "");
     virtual ~GeometricShapeBox(){};
 
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
@@ -76,7 +76,7 @@ class GeometricShapeBall : public GeometricShape
 
   public:
     explicit GeometricShapeBall(const Vecd &center, const Real &radius,
-                                const std::string &shape_name = "GeometricShapeBall");
+                                const std::string &shape_name = "");
     virtual ~GeometricShapeBall(){};
 
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;

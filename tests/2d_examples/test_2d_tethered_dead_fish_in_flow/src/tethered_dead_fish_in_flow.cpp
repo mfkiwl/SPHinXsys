@@ -127,7 +127,7 @@ class WaterBlock : public MultiPolygonShape
 class WallBoundary : public MultiPolygonShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallBoundary() : MultiPolygonShape()
     {
         std::vector<Vecd> outer_shape = createOuterWallShape();
         std::vector<Vecd> inner_shape = createInnerWallShape();
@@ -217,7 +217,7 @@ int main(int ac, char *av[])
     /**
      * @brief   Particles and body creation for wall boundary.
      */
-    WallBoundary wall_boundary_shape("Wall");
+    WallBoundaryShape wall_boundary_shape("Wall");
     SolidBody wall_boundary(system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
