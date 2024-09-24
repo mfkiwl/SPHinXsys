@@ -182,7 +182,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     WaterBlock water_block_shape(createWaterBlockShape(), "WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     LevelSetShape water_block_shape_level_set(water_block, water_block_shape);
     water_block_shape_level_set.cleanLevelSet(0);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);

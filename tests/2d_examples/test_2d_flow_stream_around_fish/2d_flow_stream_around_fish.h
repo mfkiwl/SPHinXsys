@@ -49,11 +49,11 @@ Real poisson = 0.49;
 //----------------------------------------------------------------------
 //	SPH bodies with cases dependent geometries.
 //----------------------------------------------------------------------
-class FishBody : public MultiPolygonShape
+class FishBodyShape : public MultiPolygonShape
 {
 
   public:
-    explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    FishBodyShape() : MultiPolygonShape()
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
         multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
@@ -74,7 +74,7 @@ std::vector<Vecd> createWaterBlockShape()
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         /** Geometry definition. */
         MultiPolygon outer_boundary(createWaterBlockShape());

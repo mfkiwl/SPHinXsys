@@ -31,10 +31,10 @@ Real physical_viscosity = 1000000.0;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> wall_shape{Vecd(0, 0), Vecd(0, slop_h), Vecd(DL, slop_h), Vecd(0, 0)};
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>(cube_shape);
 
-    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

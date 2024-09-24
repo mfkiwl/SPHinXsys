@@ -29,7 +29,7 @@ Real c_f = 10.0 * U_max;                               /**< Reference sound spee
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> water_block_shape;
@@ -42,10 +42,10 @@ class WaterBlock : public MultiPolygonShape
     }
 };
 
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;
@@ -78,12 +78,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    WaterBlock water_block_shape();
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

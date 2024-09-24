@@ -69,7 +69,7 @@ namespace SPH
 class DiffusionBody : public MultiPolygonShape
 {
   public:
-    explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    DiffusionBody() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
     }
@@ -78,7 +78,7 @@ class DiffusionBody : public MultiPolygonShape
 class DirichletWallBoundary : public MultiPolygonShape
 {
   public:
-    explicit DirichletWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    DirichletWallBoundary() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
@@ -88,7 +88,7 @@ class DirichletWallBoundary : public MultiPolygonShape
 class RobinWallBoundary : public MultiPolygonShape
 {
   public:
-    explicit RobinWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    RobinWallBoundary() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(convection_region, ShapeBooleanOps::add);
     }

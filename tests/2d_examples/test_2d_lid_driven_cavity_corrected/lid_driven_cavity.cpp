@@ -29,7 +29,7 @@ Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> water_body_shape;
@@ -44,10 +44,10 @@ class WaterBlock : public MultiPolygonShape
 /**
  * @brief 	Wall boundary body definition.
  */
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
-    WallBoundaryShape wall_boundary_shape("Wall");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

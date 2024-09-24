@@ -31,7 +31,7 @@ namespace SPH
 class DiffusionBlock : public MultiPolygonShape
 {
   public:
-    explicit DiffusionBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    DiffusionBlock() : MultiPolygonShape()
     {
         std::vector<Vecd> shape;
         shape.push_back(Vecd(0.0, 0.0));
@@ -103,10 +103,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    DiffusionBlock diffusion_block_shape("DiffusionBlock");
-    SolidBody diffusion_body(sph_system, diffusion_block_shape.getName());
+    SolidBody diffusion_body(sph_system, "DiffusionBlock");
     DirectionalDiffusion *diffusion =
         diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
+    DiffusionBlock diffusion_block_shape();
     diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_block_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.

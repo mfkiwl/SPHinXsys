@@ -24,22 +24,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
-    LevelSetShape water_block_level_set_shape(water_block, *water_block_shape.getSubShapeByName("OuterBoundary"));
-    water_block_level_set_shape.writeLevelSet(sph_system);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticles<BaseParticles, Lattice, Adaptive>(water_block_shape, refinement_region);
 
-    Cylinder cylinder_shape("Cylinder");
-    SolidBody cylinder(sph_system, cylinder_shape.getName());
+    SolidBody cylinder(sph_system, "Cylinder");
     cylinder.defineAdaptationRatios(1.15, 4.0);
-    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
+    LevelSetShape cylinder_shape_level_set(cylinder, makeShared<CylinderShape>());
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
@@ -81,6 +78,8 @@ int main(int ac, char *av[])
         ReloadParticleIO write_real_body_particle_reload_files({&water_block, &cylinder});
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner, &cylinder_shape_level_set);
+        LevelSetShape water_block_level_set_shape(water_block, water_block_shape.getSubShapeByName("OuterBoundary"));
+        water_block_level_set_shape.writeLevelSet(sph_system);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, &water_block_level_set_shape), water_contact);
         SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);

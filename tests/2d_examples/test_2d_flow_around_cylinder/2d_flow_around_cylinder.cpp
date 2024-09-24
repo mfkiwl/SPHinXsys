@@ -28,15 +28,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBlock");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    Cylinder cylinder_shape("Cylinder");
-    SolidBody cylinder(sph_system, cylinder_shape.getName());
+    SolidBody cylinder(sph_system, "Cylinder");
     cylinder.defineAdaptationRatios(1.15, 2.0);
-    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape, 1.0);
+    LevelSetShape cylinder_shape_level_set(cylinder, makeShared<CylinderShape>());
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())

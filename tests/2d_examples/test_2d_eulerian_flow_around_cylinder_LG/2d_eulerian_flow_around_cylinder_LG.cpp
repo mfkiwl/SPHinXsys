@@ -41,7 +41,7 @@ std::vector<Vecd> createWaterBlockShape()
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         MultiPolygon outer_boundary(createWaterBlockShape());
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
@@ -49,10 +49,10 @@ class WaterBlock : public ComplexShape
         subtract<MultiPolygonShape>(circle);
     }
 };
-class Cylinder : public MultiPolygonShape
+class CylinderShape : public MultiPolygonShape
 {
   public:
-    explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    CylinderShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
@@ -90,20 +90,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBlock");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    LevelSetShape level_set_shape(water_block, *water_block_shape.getSubShapeByName("OuterBoundary"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
         : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    Cylinder cylinder_shape("Cylinder");
-    SolidBody cylinder(sph_system, cylinder_shape.getName());
+    SolidBody cylinder(sph_system, "Cylinder");
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
+    LevelSetShape cylinder_shape_level_set(cylinder, makeShared<CylinderShape>());
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
@@ -138,8 +136,9 @@ int main(int ac, char *av[])
         BodyStatesRecordingToVtp write_real_body_states(sph_system);
         ReloadParticleIO write_real_body_particle_reload_files({&cylinder, &water_block});
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner, &cylinder_shape_level_set);
-        RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, &level_set_shape), water_block_contact);
+        LevelSetShape level_set_shape(water_block, water_block_shape.getSubShapeByName("OuterBoundary"));
+        RelaxationStepLevelSetCorrectionComplex
+            relaxation_step_complex(ConstructorArgs(water_block_inner, &level_set_shape), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------

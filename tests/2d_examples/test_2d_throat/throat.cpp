@@ -45,7 +45,7 @@ Real lambda_f = 10.0;
 class FluidBlock : public MultiPolygonShape
 {
   public:
-    explicit FluidBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    FluidBlock() : MultiPolygonShape()
     {
         std::vector<Vecd> pnts;
         pnts.push_back(Vecd(-0.5 * DL, -0.5 * DH));
@@ -76,10 +76,10 @@ class FluidBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Cases-dependent wall boundary geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         std::vector<Vecd> pnts3;
         pnts3.push_back(Vecd(-0.5 * DL - BW, -0.5 * DH - BW));
@@ -131,12 +131,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBlock fluid_block_shape("FluidBody");
-    FluidBody fluid_block(sph_system, fluid_block_shape.getName());
+    FluidBody fluid_block(sph_system, "FluidBlock");
     fluid_block.defineMaterial<Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block_shape.getBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x, fluid_block_shape);
 
-    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

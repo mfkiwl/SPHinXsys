@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     WettingFluidBody water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
@@ -200,7 +200,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     WettingCylinderBody cylinder_shape("Cylinder");
-    SolidBody cylinder(sph_system, cylinder_shape.getName());
+    SolidBody cylinder(sph_system, "Cylinder");
     cylinder.defineAdaptationRatios(1.15, 1.0);
     LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
     cylinder.defineMaterial<Solid>(rho0_s);

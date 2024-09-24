@@ -57,16 +57,16 @@ std::vector<Vecd> createBoundaryDomain()
 class DiffusionBody : public MultiPolygonShape
 {
   public:
-    explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    DiffusionBody() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
     }
 };
 
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
@@ -190,13 +190,13 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    DiffusionBody diffusion_body_shape("DiffusionBody");
+    DiffusionBody diffusion_body_shape();
     SolidBody diffusion_body(sph_system, "DiffusionBody");
     LocalIsotropicDiffusion *local_isotropic_diffusion =
         diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
-    WallBoundaryShape wall_boundary_shape("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------

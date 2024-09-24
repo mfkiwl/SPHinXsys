@@ -70,7 +70,7 @@ MultiPolygon createBufferShape()
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         /** Geometry definition. */
         MultiPolygon multi_polygon;
@@ -94,10 +94,10 @@ class ParameterizedWaterMaterial : public BaseParameterization<WeaklyCompressibl
 //----------------------------------------------------------------------
 //	Definition of the cylinder
 //----------------------------------------------------------------------
-class Cylinder : public MultiPolygonShape
+class CylinderShape : public MultiPolygonShape
 {
   public:
-    explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    CylinderShape() : MultiPolygonShape()
     {
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
     }

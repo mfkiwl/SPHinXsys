@@ -113,7 +113,7 @@ namespace SPH
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         /** Exclude the fish body. */
@@ -124,10 +124,10 @@ class WaterBlock : public MultiPolygonShape
 /**
  * Solid wall shape.
  */
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         std::vector<Vecd> outer_shape = createOuterWallShape();
         std::vector<Vecd> inner_shape = createInnerWallShape();
@@ -138,10 +138,10 @@ class WallBoundary : public MultiPolygonShape
 /**
  * Fish body shape
  */
-class FishBody : public MultiPolygonShape
+class FishBodyShape : public MultiPolygonShape
 {
   public:
-    explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    FishBodyShape() : MultiPolygonShape()
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
         multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
@@ -210,14 +210,14 @@ int main(int ac, char *av[])
     /**
      * @brief   Particles and body creation for water.
      */
-    WaterBlock water_block_shape("WaterBody");
+    WaterBlock water_block_shape();
     FluidBody water_block(system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
     /**
      * @brief   Particles and body creation for wall boundary.
      */
-    WallBoundaryShape wall_boundary_shape("Wall");
+    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);

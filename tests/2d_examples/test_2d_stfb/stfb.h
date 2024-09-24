@@ -91,7 +91,7 @@ class WallBoundaryShape : public ComplexShape
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(water_block_translation), water_block_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(structure_translation), structure_halfsize);

@@ -26,7 +26,7 @@ Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(0.0, 0.0));
@@ -73,8 +73,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    WaterBlock water_block_shape();
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     // Using relaxed particle distribution if needed
     sph_system.ReloadParticles()

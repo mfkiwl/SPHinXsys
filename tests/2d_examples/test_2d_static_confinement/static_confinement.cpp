@@ -68,7 +68,7 @@ std::vector<Vecd> createStructureShape()
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
     }
@@ -109,8 +109,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    WaterBlock water_block_shape();
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 

@@ -29,7 +29,7 @@ Real heat_capacity_ratio = 1.4;     /**< heat capacity ratio. */
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> water_body_shape;
@@ -82,10 +82,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBody");
-    FluidBody water_body(sph_system, water_block_shape.getName());
+    FluidBody water_body(sph_system, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineMaterial<CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
+    WaterBlock water_block_shape;
     water_body.generateParticles<BaseParticles, Lattice>(water_block_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

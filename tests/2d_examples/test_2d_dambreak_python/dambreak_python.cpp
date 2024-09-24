@@ -60,10 +60,10 @@ class PreSettingCase : public Parameter
     BoundingBox system_domain_bounds;
     SPHSystem sph_system;
     IOEnvironment io_environment;
-    TransformShape<GeometricShapeBox> water_block_shape;
     FluidBody water_block;
-    WallBoundaryShape wall_boundary_shape;
+    TransformShape<GeometricShapeBox> water_block_shape;
     SolidBody wall_boundary;
+    WallBoundaryShape wall_boundary_shape;
     StdVec<Vecd> observation_location;
     ObserverBody fluid_observer;
 
@@ -72,10 +72,10 @@ class PreSettingCase : public Parameter
         : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref),
           io_environment(sph_system),
-          water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody"),
-          water_block(sph_system, water_block_shape.getName()),
-          wall_boundary_shape("WallBoundary"),
-          wall_boundary(sph_system, wall_boundary_shape.getName()),
+          water_block(sph_system, "WaterBody"),
+          water_block_shape(Transform(water_block_translation), water_block_halfsize),
+          wall_boundary(sph_system, "WallBoundary"),
+          wall_boundary_shape(),
           observation_location({Vecd(DL, 0.2)}),
           fluid_observer(sph_system, "FluidObserver")
     {

@@ -202,7 +202,7 @@ MultiPolygon createWaveMakerShape()
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::sub);
@@ -210,10 +210,10 @@ class WaterBlock : public MultiPolygonShape
     }
 };
 
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);

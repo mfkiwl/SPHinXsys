@@ -35,7 +35,7 @@ Real k_a = 0.0;
 class MuscleBlock : public MultiPolygonShape
 {
   public:
-    explicit MuscleBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    MuscleBlock() : MultiPolygonShape()
     {
         std::vector<Vecd> shape;
         shape.push_back(Vecd(0.0, 0.0));
@@ -79,12 +79,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    MuscleBlock muscle_block_shape("MuscleBlock");
-    SolidBody muscle_body(sph_system, muscle_block_shape.getName());
+    SolidBody muscle_body(sph_system, "MuscleBlock");
     AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     MonoFieldElectroPhysiology<DirectionalDiffusion> *mono_field_electro_physiology =
         muscle_body.defineMaterial<MonoFieldElectroPhysiology<DirectionalDiffusion>>(
             muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
+    MuscleBlock muscle_block_shape();
     muscle_body.generateParticles<BaseParticles, Lattice>(muscle_block_shape);
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");

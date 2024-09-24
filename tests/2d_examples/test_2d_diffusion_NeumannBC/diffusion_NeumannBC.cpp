@@ -20,20 +20,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    DiffusionBody diffusion_body_shape("DiffusionBody");
     SolidBody diffusion_body(sph_system, "DiffusionBody");
     IsotropicDiffusion *diffusion =
         diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
+    DiffusionBody diffusion_body_shape;
     diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
-    DirichletWallBoundary wall_shape_Dirichlet("DirichletWallBoundary");
-    SolidBody wall_Dirichlet(sph_system, wall_shape_Dirichlet.getName());
+    SolidBody wall_Dirichlet(sph_system, "DirichletWallBoundary");
     wall_Dirichlet.defineMaterial<Solid>();
+    DirichletWallBoundary wall_shape_Dirichlet;
     wall_Dirichlet.generateParticles<BaseParticles, Lattice>(wall_shape_Dirichlet);
 
-    NeumannWallBoundary wall_shape_Neumann("NeumannWallBoundary");
-    SolidBody wall_Neumann(sph_system, wall_shape_Neumann.getName());
+    SolidBody wall_Neumann(sph_system, "NeumannWallBoundary");
     wall_Neumann.defineMaterial<Solid>();
+    NeumannWallBoundary wall_shape_Neumann;
     wall_Neumann.generateParticles<BaseParticles, Lattice>(wall_shape_Neumann);
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.

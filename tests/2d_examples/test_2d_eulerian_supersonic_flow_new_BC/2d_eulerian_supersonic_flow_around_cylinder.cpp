@@ -25,22 +25,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBlock fluid_block_shape("FluidBlock");
-    FluidBody fluid_block(sph_system, fluid_block_shape.getName());
-    fluid_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    LevelSetShape level_set_shape(fluid_block, fluid_block_shape);
-    fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
+    FluidBody fluid_body(sph_system, "FluidBlock");
+    fluid_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    LevelSetShape level_set_shape(fluid_body, makeShared<FluidBlock>());
+    fluid_body.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? fluid_block.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_block.getName())
-        : fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_boundary, level_set_shape);
+        ? fluid_body.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_body.getName())
+        : fluid_body.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_boundary, level_set_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //	Note that the same relation should be defined only once.
     //----------------------------------------------------------------------
-    InnerRelation fluid_block_inner(fluid_block);
+    InnerRelation fluid_block_inner(fluid_body);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -50,9 +49,9 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
-        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(fluid_block);
-        BodyStatesRecordingToVtp write_real_body_states(fluid_block);
-        ReloadParticleIO write_real_body_particle_reload_files(fluid_block);
+        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(fluid_body);
+        BodyStatesRecordingToVtp write_real_body_states(fluid_body);
+        ReloadParticleIO write_real_body_particle_reload_files(fluid_body);
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(fluid_block_inner, &level_set_shape);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -85,8 +84,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<FreeSurfaceIndication<Inner<>>> surface_indicator(fluid_block_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(fluid_block_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(fluid_block_inner);
-    SimpleDynamics<SupersonicFlowInitialCondition> initial_condition(fluid_block);
-    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(fluid_block, 0.1);
+    SimpleDynamics<SupersonicFlowInitialCondition> initial_condition(fluid_body);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(fluid_body, 0.1);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> kernel_correction_matrix(fluid_block_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(fluid_block_inner);
     //----------------------------------------------------------------------
@@ -113,10 +112,10 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
-    write_real_body_states.addToWrite<int>(fluid_block, "Indicator");
-    write_real_body_states.addToWrite<Vecd>(fluid_block, "Velocity");
-    write_real_body_states.addToWrite<Real>(fluid_block, "Pressure");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_body);
+    write_real_body_states.addToWrite<int>(fluid_body, "Indicator");
+    write_real_body_states.addToWrite<Vecd>(fluid_body, "Velocity");
+    write_real_body_states.addToWrite<Real>(fluid_body, "Pressure");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

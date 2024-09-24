@@ -50,7 +50,7 @@ Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         MultiPolygon outer_boundary(water_block_shape);
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
@@ -58,10 +58,10 @@ class WaterBlock : public ComplexShape
         subtract<MultiPolygonShape>(circle);
     }
 };
-class Cylinder : public MultiPolygonShape
+class CylinderShape : public MultiPolygonShape
 {
   public:
-    explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    CylinderShape() : MultiPolygonShape()
     {
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
     }

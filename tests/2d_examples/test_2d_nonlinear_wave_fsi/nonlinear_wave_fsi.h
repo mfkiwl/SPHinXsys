@@ -306,7 +306,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> water_block_shape;
@@ -365,10 +365,10 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Wall cases-dependent geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;

@@ -60,7 +60,7 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WaterBlock() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> water_block_shape;
@@ -75,10 +75,10 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Wall cases-dependent geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;
@@ -145,20 +145,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape("WaterBlock");
-    FluidBody water_block(sph_system, water_block_shape.getName());
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    WaterBlock water_block_shape;
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    WallBoundaryShape wall_boundary_shape("WallBoundary");
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    MultiPolygonShape gate_shape(createGateShape(), "Gate");
-    SolidBody gate(sph_system, gate_shape.getName());
+    SolidBody gate(sph_system, "Gate");
     gate.defineAdaptationRatios(1.15, 2.0);
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    MultiPolygonShape gate_shape(createGateShape());
     gate.generateParticles<BaseParticles, Lattice>(gate_shape);
 
     ObserverBody gate_observer(sph_system, "Observer");

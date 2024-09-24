@@ -32,10 +32,10 @@ Real physical_viscosity = 10000.0;
 //----------------------------------------------------------------------
 //	Geometric shapes
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         std::vector<Vecd> outer_wall_shape;
         outer_wall_shape.push_back(Vecd(-BW, -BW));

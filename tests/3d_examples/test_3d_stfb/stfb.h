@@ -87,7 +87,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         /** Geometry definition. */
         Vecd halfsize_water(0.5 * DW, 0.5 * DL, 0.5 * WH);

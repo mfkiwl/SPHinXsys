@@ -13,7 +13,7 @@ using namespace SPH;
 Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
 Real resolution_ref = 0.025;  /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4; /**< Extending width for wall boundary. */
+Real BW = resolution_ref * 4; /**< Extending width for wall_boundary boundary. */
 Real LL = 2.0 * BW;           /**< Inflow region length. */
 Real LH = 0.125;              /**< Inflows region height. */
 Real inlet_height = 1.0;      /**< Inflow location height */
@@ -30,7 +30,7 @@ Real c_f = 10.0 * U_f;                                  /**< Reference sound spe
 //----------------------------------------------------------------------
 //	Geometries
 //----------------------------------------------------------------------
-/** create a outer wall polygon. */
+/** create a outer wall_boundary polygon. */
 std::vector<Vecd> CreateOuterWallShape()
 {
     std::vector<Vecd> outer_wall_shape;
@@ -42,7 +42,7 @@ std::vector<Vecd> CreateOuterWallShape()
 
     return outer_wall_shape;
 }
-/** create a inner wall polygon. */
+/** create a inner wall_boundary polygon. */
 std::vector<Vecd> CreateInnerWallShape()
 {
     std::vector<Vecd> inner_wall_shape;
@@ -55,12 +55,12 @@ std::vector<Vecd> CreateInnerWallShape()
     return inner_wall_shape;
 }
 //----------------------------------------------------------------------
-//	Case-dependent wall boundary
+//	Case-dependent wall_boundary boundary
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundaryShape : public MultiPolygonShape
 {
   public:
-    WallBoundary() : MultiPolygonShape()
+    WallBoundaryShape() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
@@ -93,17 +93,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer, water_inlet_shape);
 
-    WallBoundaryShape wall_boundary_shape("Wall");
-    SolidBody wall(sph_system, wall_boundary_shape.getName());
-    wall.defineMaterial<Solid>();
-    wall.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
+    SolidBody wall_boundary(sph_system, "WallBoundary");
+    wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
@@ -116,7 +116,7 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_body);
-    ContactRelation water_body_contact(water_body, {&wall});
+    ContactRelation water_body_contact(water_body, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_body});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall, wall_boundary_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall_boundary, wall_boundary_shape);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> indicate_free_surface(water_body_inner, water_body_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_body_contact);
@@ -236,7 +236,7 @@ int main(int ac, char *av[])
 
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds()
+    std::cout << "Total wall_boundary time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
     write_water_mechanical_energy.testResult();

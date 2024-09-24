@@ -34,7 +34,7 @@ Real mu_f = 1.0e-3;
 class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    WaterBlock() : ComplexShape()
     {
         /** Geometry definition. */
         Vecd halfsize_water(0.5 * DW, 0.5 * DL, 0.5 * WH);
