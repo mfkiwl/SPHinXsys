@@ -122,10 +122,10 @@ class WallBoundaryShape : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class Insert : public MultiPolygonShape
+class InsertShape : public MultiPolygonShape
 {
   public:
-    explicit Insert(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    InsertShape() : MultiPolygonShape()
     {
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);

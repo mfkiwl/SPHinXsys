@@ -28,20 +28,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
     FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    Insert inserted_body_shape("InsertedBody");
-    SolidBody insert_body(sph_system, inserted_body_shape.getName());
+    SolidBody insert_body(sph_system, "InsertedBody");
     insert_body.defineAdaptationRatios(1.15, 2.0);
-    LevelSetShape level_set_shape(insert_body, inserted_body_shape, 1.0);
+    LevelSetShape level_set_shape(insert_body, makeShared<InsertShape>());
     level_set_shape.writeLevelSet(sph_system);
     insert_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
