@@ -39,7 +39,7 @@ void relax_solid(InnerRelation &inner, LevelSetShape &level_set_shape)
 class Ring : public MultiPolygonShape
 {
   public:
-    explicit Ring(const std::string &shape_name, const Vec2d &center, Real radius_inner, Real radius_outer) : MultiPolygonShape(shape_name)
+    Ring(const Vec2d &center, Real radius_inner, Real radius_outer) : MultiPolygonShape()
     {
         multi_polygon_.addACircle(center, radius_outer, 100, ShapeBooleanOps::add);
         multi_polygon_.addACircle(center, radius_inner, 100, ShapeBooleanOps::sub);
@@ -189,22 +189,19 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     IOEnvironment io_environment(system);
 
     // Body
-    Ring ring_l_body_shape("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l);
-    SolidBody ring_l_body(system, ring_l_body_shape.getName());
-    LevelSetShape level_set_shape(ring_l_body, ring_l_body_shape);
+    SolidBody ring_l_body(system, "RingLarge");
+    LevelSetShape level_set_shape(ring_l_body, makeShared<Ring>(center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));
     ring_l_body.assignMaterial(material_l.get());
     ring_l_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
     auto particles_l = &ring_l_body.getBaseParticles();
 
-    DefaultShape ring_m_default_shape("RingMedium");
-    SolidBody ring_m_body(system, ring_m_default_shape.getName());
+    SolidBody ring_m_body(system, "RingMedium");
     ring_m_body.defineAdaptationRatios(1.15, dp_l / dp_m);
     ring_m_body.assignMaterial(material_m.get());
     ring_m_body.generateParticles<SurfaceParticles, ShellRing>(center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m);
     auto particles_m = &ring_m_body.getBaseParticles();
 
-    DefaultShape ring_s_default_shape("RingSmall");
-    SolidBody ring_s_body(system, ring_s_default_shape.getName());
+    SolidBody ring_s_body(system, "RingSmall");
     ring_s_body.defineAdaptationRatios(1.15, dp_l / dp_s);
     ring_s_body.assignMaterial(material_s.get());
     ring_s_body.generateParticles<SurfaceParticles, ShellRing>(center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s);
@@ -252,7 +249,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Contact relation
     SurfaceContactRelation contact_s(ring_s_body, ring_s_default_shape, {&ring_m_body}, {true});
     SurfaceContactRelation contact_m(ring_m_body, ring_m_default_shape, {&ring_s_body, &ring_l_body}, {true, false});
-    SurfaceContactRelation contact_l(ring_l_body, ring_l_body_shape, {&ring_m_body}, {true});
+    SurfaceContactRelation contact_l(ring_l_body, level_set_shape, {&ring_m_body}, {true});
 
     // Inner relation of curvature
     ShellInnerRelationWithContactKernel curvature_inner_m_with_s_kernel(ring_m_body, ring_s_body);

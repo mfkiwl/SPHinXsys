@@ -74,7 +74,7 @@ std::vector<Vecd> beam_right_stretch_shape{
 class Beam : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Beam() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(beam_right_stretch_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
@@ -184,12 +184,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    Beam beam_body_shape("StretchingBody");
-    SolidBody beam_body(system, beam_body_shape.getName());
-    LevelSetShape level_set_shape(beam_body, beam_body_shape);
+    SolidBody beam_body(system, "StretchingBody");
+    LevelSetShape level_set_shape(beam_body, makeShared<Beam>());
     beam_body.defineMaterial<NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
-
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.getName())
         : beam_body.generateParticles<BaseParticles, Lattice>(level_set_shape);

@@ -57,7 +57,7 @@ class WaterBlock : public ComplexShape
 class AirBlock : public ComplexShape
 {
   public:
-    explicit AirBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    AirBlock() : ComplexShape()
     {
         add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
@@ -90,19 +90,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    AirBlock air_block_shape("AirBody");
-    FluidBody air_block(sph_system, air_block_shape.getName());
+    FluidBody air_block(sph_system, "AirBody");
     air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
+    AirBlock air_block_shape;
     air_block.generateParticles<BaseParticles, Lattice>(air_block_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

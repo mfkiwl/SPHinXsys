@@ -50,14 +50,14 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
  */
 std::vector<Vecd> createWaterBlockShape()
 {
-    std::vector<Vecd> pnts_shaping_water_block;
-    pnts_shaping_water_block.push_back(Vecd(-DL_sponge, 0.0));
-    pnts_shaping_water_block.push_back(Vecd(-DL_sponge, DH));
-    pnts_shaping_water_block.push_back(Vecd(DL, DH));
-    pnts_shaping_water_block.push_back(Vecd(DL, 0.0));
-    pnts_shaping_water_block.push_back(Vecd(-DL_sponge, 0.0));
+    std::vector<Vecd> pnts_shaping_water_body;
+    pnts_shaping_water_body.push_back(Vecd(-DL_sponge, 0.0));
+    pnts_shaping_water_body.push_back(Vecd(-DL_sponge, DH));
+    pnts_shaping_water_body.push_back(Vecd(DL, DH));
+    pnts_shaping_water_body.push_back(Vecd(DL, 0.0));
+    pnts_shaping_water_body.push_back(Vecd(-DL_sponge, 0.0));
 
-    return pnts_shaping_water_block;
+    return pnts_shaping_water_body;
 }
 Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
@@ -210,24 +210,23 @@ int main(int ac, char *av[])
     /**
      * @brief   Particles and body creation for water.
      */
-    WaterBlock water_block_shape();
-    FluidBody water_block(system, water_block_shape.getName());
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+    FluidBody water_body(system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_body_shape;
+    water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
     /**
      * @brief   Particles and body creation for wall boundary.
      */
-    WallBoundaryShape wall_boundary_shape;
-    SolidBody wall_boundary(system, wall_boundary_shape.getName());
+    SolidBody wall_boundary(system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     /**
      * @brief   Particles and body creation for fish.
      */
-    FishBody fish_body_shape("FishBody");
-    SolidBody fish_body(system, fish_body_shape.getName());
+    SolidBody fish_body(system, "FishBody");
     fish_body.defineAdaptationRatios(1.15, 2.0);
-    LevelSetShape level_set_shape(fish_body, fish_body_shape, 1.0);
+    LevelSetShape level_set_shape(fish_body, makeShared<FishBodyShape>());
     level_set_shape.writeLevelSet(system);
     fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
@@ -240,16 +239,16 @@ int main(int ac, char *av[])
     ObserverBody fish_observer(system, "Observer");
     fish_observer.generateParticles<ObserverParticles>(createObservationPoints());
     /** topology */
-    InnerRelation water_block_inner(water_block);
+    InnerRelation water_body_inner(water_body);
     InnerRelation fish_body_inner(fish_body);
-    ContactRelation water_block_contact(water_block, {&wall_boundary, &fish_body});
-    ContactRelation fish_body_contact(fish_body, {&water_block});
+    ContactRelation water_body_contact(water_body, {&wall_boundary, &fish_body});
+    ContactRelation fish_body_contact(fish_body, {&water_body});
     ContactRelation fish_observer_contact(fish_observer, {&fish_body});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    ComplexRelation water_body_complex(water_body_inner, water_body_contact);
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (system.RunParticleRelaxation())
     {
@@ -298,8 +297,8 @@ int main(int ac, char *av[])
      * @brief   Methods used for updating data structure.
      */
     /** Periodic BCs in x direction. */
-    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
+    PeriodicAlongAxis periodic_along_x(water_body_shape.getBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition(water_body, periodic_along_x);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body, level_set_shape);
     /** Corrected configuration.*/
@@ -308,23 +307,23 @@ int main(int ac, char *av[])
      * Common particle dynamics.
      */
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_body_inner, water_body_contact);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     /** Pressure relaxation using verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_body_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_body_inner, water_body_contact);
     /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_body_inner, water_body_contact);
     /** Impose transport velocity formulation. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_body_inner, water_body_contact);
     /** Computing vorticity in the flow. */
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_body_inner);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
-        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+        water_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     /**
@@ -350,7 +349,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
+    ParticleSorting particle_sorting(water_body);
     /**
      * The multi body system from simbody.
      */
@@ -512,10 +511,10 @@ int main(int ac, char *av[])
             {
                 particle_sorting.exec();
             }
-            water_block.updateCellLinkedList();
+            water_body.updateCellLinkedList();
             fish_body.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
-            water_block_complex.updateConfiguration();
+            water_body_complex.updateConfiguration();
             /** Fish body contact configuration. */
             fish_body_contact.updateConfiguration();
             write_fish_displacement.writeToFile(number_of_iterations);

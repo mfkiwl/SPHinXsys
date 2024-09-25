@@ -75,7 +75,7 @@ StdVec<Vecd> observation_location = {Vecd(PL / 4.0, 0.0)};
 class Beam : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Beam() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     Beam beam_body_shape("2dMembraneBase");
-    SolidBody beam_body(sph_system, beam_body_shape.getName());
+    SolidBody beam_body(sph_system, "BeamBody");
     beam_body.defineMaterial<multi_species_continuum::PorousMediaSolid>(
         rho_0, Youngs_modulus, poisson, diffusivity_constant_, fluid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);

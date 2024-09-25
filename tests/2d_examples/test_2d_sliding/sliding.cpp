@@ -45,7 +45,7 @@ class WallBoundaryShape : public MultiPolygonShape
 class Cube : public MultiPolygonShape
 {
   public:
-    explicit Cube(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Cube() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> cubic_shape;
@@ -74,14 +74,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
-    Cube cube_shape("FreeCube");
-    SolidBody free_cube(sph_system, cube_shape.getName());
+    SolidBody free_cube(sph_system, "FreeCube");
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    Cube cube_shape;
     free_cube.generateParticles<BaseParticles, Lattice>(cube_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody cube_observer(sph_system, "CubeObserver");

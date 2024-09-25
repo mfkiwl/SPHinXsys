@@ -225,7 +225,7 @@ class WallBoundaryShape : public MultiPolygonShape
 class Flap : public MultiPolygonShape
 {
   public:
-    explicit Flap(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Flap() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
     }

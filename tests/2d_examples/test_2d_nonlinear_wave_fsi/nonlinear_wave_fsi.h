@@ -250,7 +250,7 @@ MultiPolygon createStructureShape()
 class FloatingStructure : public MultiPolygonShape
 {
   public:
-    explicit FloatingStructure(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    FloatingStructure() : MultiPolygonShape()
     {
         /** Geometry definition. */
         std::vector<Vecd> sructure_bp;

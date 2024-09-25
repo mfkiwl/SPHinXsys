@@ -24,7 +24,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, "WaterBlock");
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     WaterBlock water_block_shape;

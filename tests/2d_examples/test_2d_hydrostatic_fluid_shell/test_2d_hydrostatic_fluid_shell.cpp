@@ -14,7 +14,7 @@ namespace SPH
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WaterBlock(const std::vector<Vecd> &shape) : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
     }
@@ -111,14 +111,14 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     auto createWaterBlockShape = [&]()
     {
-        std::vector<Vecd> water_block_shape;
-        water_block_shape.push_back(DamP_lb);
-        water_block_shape.push_back(DamP_lt);
-        water_block_shape.push_back(DamP_rt);
-        water_block_shape.push_back(DamP_rb);
-        water_block_shape.push_back(DamP_lb);
+        std::vector<Vecd> water_body_shape;
+        water_body_shape.push_back(DamP_lb);
+        water_body_shape.push_back(DamP_lt);
+        water_body_shape.push_back(DamP_rt);
+        water_body_shape.push_back(DamP_rb);
+        water_body_shape.push_back(DamP_lb);
 
-        return water_block_shape;
+        return water_body_shape;
     };
     //----------------------------------------------------------------------
     //	Define the geometry for gate constrain.
@@ -181,14 +181,13 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape(createWaterBlockShape(), "WaterBody");
-    FluidBody water_block(sph_system, "WaterBlock");
-    LevelSetShape water_block_shape_level_set(water_block, water_block_shape);
-    water_block_shape_level_set.cleanLevelSet(0);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape_level_set);
+    FluidBody water_body(sph_system, "WaterBody");
+    LevelSetShape water_body_shape_level_set(water_body, makeShared<WaterBlock>(createWaterBlockShape()));
+    water_body_shape_level_set.cleanLevelSet(0);
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.generateParticles<BaseParticles, Lattice>(water_body_shape_level_set);
 
-    SolidBody wall_boundary(sph_system, "Wall");
+    SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(DH, DL, particle_spacing_gate);
@@ -211,20 +210,20 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
+    InnerRelation water_body_inner(water_body);
     InnerRelation gate_inner(gate);
     // shell normal should point from fluid to shell
     // normal corrector set to true if shell normal is currently pointing from shell to fluid
-    ContactRelationFromShellToFluid water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
-    ContactRelationFromFluidToShell gate_contact(gate, {&water_block}, {true});
+    ContactRelationFromShellToFluid water_body_contact(water_body, {&wall_boundary, &gate}, {true, true});
+    ContactRelationFromFluidToShell gate_contact(gate, {&water_body}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
-    ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);
+    ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_body);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    ComplexRelation water_body_complex(water_body_inner, water_body_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -253,17 +252,17 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_body_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_body_inner, water_body_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_body_inner, water_body_contact);
 
     /** Compute time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_ref);
     /** Compute time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
-        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+        fluid_damping(0.2, ConstructorArgs(water_body_inner, "Velocity", mu_f), ConstructorArgs(water_body_contact, "Velocity", mu_f));
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------
@@ -275,7 +274,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
-    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(water_body, "Pressure");
     write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average1stPrincipleCurvature");
     write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average2ndPrincipleCurvature");
     write_real_body_states_to_vtp.addToWrite<Vecd>(gate, "PressureForceFromFluid");
@@ -294,7 +293,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     gate_corrected_configuration.exec();
     gate_curvature.exec();
     /** update fluid-shell contact*/
-    water_block_contact.updateConfiguration();
+    water_body_contact.updateConfiguration();
     gate_contact.updateConfiguration();
     constant_gravity.exec();
     //----------------------------------------------------------------------
@@ -374,10 +373,10 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
             gate_curvature.exec();
 
             /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedList(); // water particle motion is small
+            water_body.updateCellLinkedList(); // water particle motion is small
 
             /** one need update configuration after periodic condition. */
-            water_block_complex.updateConfiguration();
+            water_body_complex.updateConfiguration();
             gate_contact.updateConfiguration();
 
             /** Output the observed data. */

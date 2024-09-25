@@ -56,7 +56,7 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 class Beam : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Beam() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
@@ -107,9 +107,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    Beam beam_body_shape("BeamBody");
-    RealBody beam_body(sph_system, beam_body_shape.getName());
+
+    RealBody beam_body(sph_system, "BeamBody");
     beam_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    Beam beam_body_shape;
     beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

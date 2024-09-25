@@ -26,10 +26,10 @@ BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
-class InputBody : public ComplexShape
+class InputBodyShape : public ComplexShape
 {
   public:
-    explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
+    InputBodyShape() : ComplexShape()
     {
         MultiPolygon original_logo;
         original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
@@ -50,9 +50,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    InputBody input_body_shape("SPHInXsysLogo");
-    RealBody input_body(sph_system, input_body_shape.getName());
-    LevelSetShape level_set_shape(input_body, input_body_shape);
+    RealBody input_body(sph_system, "SPHInXsysLogo");
+    LevelSetShape level_set_shape(input_body, makeShared<InputBodyShape>());
     level_set_shape.writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
     //----------------------------------------------------------------------

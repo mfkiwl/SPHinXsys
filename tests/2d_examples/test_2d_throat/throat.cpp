@@ -130,15 +130,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBlock fluid_block_shape("FluidBody");
-    FluidBody fluid_block(sph_system, "FluidBlock");
+    FluidBody fluid_block(sph_system, "FluidBody");
     fluid_block.defineMaterial<Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
+    FluidBlock fluid_block_shape;
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block_shape.getBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x, fluid_block_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

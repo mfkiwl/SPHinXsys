@@ -78,7 +78,7 @@ Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 class ThermofluidBody : public MultiPolygonShape
 {
   public:
-    explicit ThermofluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    ThermofluidBody() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createShape(), ShapeBooleanOps::add);
     }
@@ -86,7 +86,7 @@ class ThermofluidBody : public MultiPolygonShape
 class ThermosolidBody : public MultiPolygonShape
 {
   public:
-    explicit ThermosolidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    ThermosolidBody() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
@@ -188,14 +188,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    ThermofluidBody thermofluid_body_shape("ThermofluidBody");
-    FluidBody thermofluid_body(sph_system, thermofluid_body_shape.getName());
+    FluidBody thermofluid_body(sph_system, "ThermofluidBody");
     thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    ThermofluidBody thermofluid_body_shape;
     thermofluid_body.generateParticles<BaseParticles, Lattice>(thermofluid_body_shape);
 
-    ThermosolidBody thermosolid_body_shape("ThermosolidBody");
-    SolidBody thermosolid_body(sph_system, thermosolid_body_shape.getName());
+    SolidBody thermosolid_body(sph_system, "ThermosolidBody");
     thermosolid_body.defineMaterial<Solid>();
+    ThermosolidBody thermosolid_body_shape;
     thermosolid_body.generateParticles<BaseParticles, Lattice>(thermosolid_body_shape);
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");

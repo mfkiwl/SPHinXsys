@@ -30,7 +30,7 @@ Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
 /** the water block in T shape polygon. */
-std::vector<Vecd> water_block_shape{
+std::vector<Vecd> water_body_shape{
     Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH),
     Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
 /** the outer wall polygon. */
@@ -49,7 +49,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     WaterBlock() : MultiPolygonShape()
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
     }
 };
 
@@ -97,16 +97,17 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
-    //	Creating body, materials and particles.cd
+    //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_body_shape;
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer, water_block_shape);
-    WallBoundaryShape wall_boundary_shape;
+    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer, water_body_shape);
+
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -116,61 +117,61 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
-    ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    InnerRelation water_body_inner(water_body);
+    ContactRelation water_wall_contact(water_body, {&wall_boundary});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
+    ComplexRelation water_body_complex(water_body_inner, water_wall_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_body_inner, water_wall_contact);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_body_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_body_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_body_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_body_inner, water_wall_contact);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
 
     Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    BodyAlignedBoxByParticle emitter(water_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
 
     Vec2d inlet_flow_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
     Vec2d inlet_flow_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_flow_buffer_halfsize;
-    BodyAlignedBoxByCell inlet_flow_buffer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(inlet_flow_buffer_translation)), inlet_flow_buffer_halfsize));
+    BodyAlignedBoxByCell inlet_flow_buffer(water_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(inlet_flow_buffer_translation)), inlet_flow_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_condition(inlet_flow_buffer);
     Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
     Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
     BodyAlignedBoxByCell disposer_up(
-        water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+        water_body, makeShared<AlignedBoxShape>(yAxis, Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up);
 
     Vec2d disposer_down_halfsize = disposer_up_halfsize;
     Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, -DH) + disposer_down_halfsize;
     BodyAlignedBoxByCell disposer_down(
-        water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
+        water_body, makeShared<AlignedBoxShape>(yAxis, Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
+    ParticleSorting particle_sorting(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_body_states(sph_system);
-    write_body_states.addToWrite<Real>(water_block, "Pressure"); // output for debug
-    write_body_states.addToWrite<int>(water_block, "Indicator"); // output for debug
+    write_body_states.addToWrite<Real>(water_body, "Pressure"); // output for debug
+    write_body_states.addToWrite<int>(water_body, "Indicator"); // output for debug
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
-        write_water_kinetic_energy(water_block);
+        write_water_kinetic_energy(water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -244,8 +245,8 @@ int main(int ac, char *av[])
             {
                 particle_sorting.exec();
             }
-            water_block.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
+            water_body.updateCellLinkedList();
+            water_body_complex.updateConfiguration();
         }
 
         TickCount t2 = TickCount::now();

@@ -79,7 +79,7 @@ class WaterBlock : public MultiPolygonShape
 class WallShape : public MultiPolygonShape
 {
   public:
-    explicit WallShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    WallShape() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
     }
@@ -90,7 +90,7 @@ class WallShape : public MultiPolygonShape
 class Triangle : public MultiPolygonShape
 {
   public:
-    explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Triangle() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
     }
@@ -109,10 +109,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    WaterBlock water_block_shape;
+    water_body.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
@@ -124,33 +124,31 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    InnerRelation water_block_inner(water_body);
+    ContactRelation fluid_observer_contact(fluid_observer, {&water_body});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_ref);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
 
     /** Define the confinement condition for wall. */
-    WallShape wall_shape("Wall");
-    LevelSetShape wall_level_set_shape(water_block, wall_shape);
+    LevelSetShape wall_level_set_shape(water_body, makeShared<WallShape>());
     wall_level_set_shape.writeLevelSet(sph_system);
-    NearShapeSurface near_surface_wall(water_block, wall_level_set_shape);
+    NearShapeSurface near_surface_wall(water_body, wall_level_set_shape);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
-    InverseShape<Triangle> structure_shape("Triangle");
-    LevelSetShape structure_level_set_shape(water_block, structure_shape);
+    LevelSetShape structure_level_set_shape(water_body, makeShared<InverseShape<Triangle>>());
     structure_level_set_shape.writeLevelSet(sph_system);
-    NearShapeSurface near_surface_triangle(water_block, structure_level_set_shape);
+    NearShapeSurface near_surface_triangle(water_body, structure_level_set_shape);
     near_surface_triangle.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement condition to corresponding dynamics. */
@@ -165,14 +163,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
+    ParticleSorting particle_sorting(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(water_block, gravity);
+        write_water_mechanical_energy(water_body, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
@@ -254,7 +252,7 @@ int main(int ac, char *av[])
             {
                 particle_sorting.exec();
             }
-            water_block.updateCellLinkedList();
+            water_body.updateCellLinkedList();
             water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;

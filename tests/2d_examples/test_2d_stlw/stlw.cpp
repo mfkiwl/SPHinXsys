@@ -17,14 +17,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody");
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    TransformShape<GeometricShapeBox> water_body_shape(Transform(water_block_translation), water_block_halfsize);
+    water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -34,37 +34,37 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
-    ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    InnerRelation water_body_inner(water_body);
+    ContactRelation water_wall_contact(water_body, {&wall_boundary});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
+    ComplexRelation water_body_complex(water_body_inner, water_wall_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_body_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_body_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_body_inner, water_wall_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
+    ParticleSorting particle_sorting(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
-    BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
+    BodyRegionByCell wave_probe_buffer(water_body, wave_probe_buffer_shape);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     //----------------------------------------------------------------------
@@ -133,9 +133,9 @@ int main(int ac, char *av[])
             {
                 particle_sorting.exec();
             }
-            water_block.updateCellLinkedList();
+            water_body.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
+            water_body_complex.updateConfiguration();
 
             if (total_time >= relax_time)
             {

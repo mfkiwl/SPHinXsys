@@ -38,23 +38,23 @@ TEST(test_GeometricShapeBox, test_closest_point)
 
 TEST(test_Complex_GeometricShapeBox, test_contain)
 {
-    WallBoundary wall_boundary("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
 
-    EXPECT_EQ(wall_boundary.checkContain(test_point), true);
+    EXPECT_EQ(wall_boundary_shape.checkContain(test_point), true);
 }
 
 TEST(test_Complex_GeometricShapeBox, test_closest_point)
 {
-    WallBoundary wall_boundary("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
 
-    EXPECT_LE((wall_boundary.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance());
+    EXPECT_LE((wall_boundary_shape.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance());
 }
 
 TEST(test_Complex_GeometricShapeBox, test_normal_direction)
 {
-    WallBoundary wall_boundary("WallBoundary");
+    WallBoundaryShape wall_boundary_shape;
 
-    EXPECT_LE((wall_boundary.findNormalDirection(test_point) - Vec2d(0.0, 1.0)).cwiseAbs().maxCoeff(), tolerance());
+    EXPECT_LE((wall_boundary_shape.findNormalDirection(test_point) - Vec2d(0.0, 1.0)).cwiseAbs().maxCoeff(), tolerance());
 }
 
 int main(int argc, char *argv[])

@@ -32,14 +32,14 @@ Vec2d DamP_rb(LL / 2, -LH / 2);  /**< Right bottom. */
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(DamP_lb);
-    water_block_shape.push_back(DamP_lt);
-    water_block_shape.push_back(DamP_rt);
-    water_block_shape.push_back(DamP_rb);
-    water_block_shape.push_back(DamP_lb);
+    std::vector<Vecd> water_body_shape;
+    water_body_shape.push_back(DamP_lb);
+    water_body_shape.push_back(DamP_lt);
+    water_body_shape.push_back(DamP_rt);
+    water_body_shape.push_back(DamP_rb);
+    water_body_shape.push_back(DamP_lb);
 
-    return water_block_shape;
+    return water_body_shape;
 }
 class WaterBlock : public MultiPolygonShape
 {
@@ -118,14 +118,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    // Using relaxed particle distribution if needed
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    WaterBlock water_body_shape;
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+        ? water_body.generateParticles<BaseParticles, Reload>(water_body.getName())
+        : water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};
@@ -134,8 +132,8 @@ int main(int ac, char *av[])
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    InnerRelation water_body_inner(water_block);
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    InnerRelation water_body_inner(water_body);
+    ContactRelation fluid_observer_contact(fluid_observer, {&water_body});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -151,23 +149,23 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInnerFreeStream> update_density_by_summation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<NoLimiter, BulkParticles>> transport_velocity_correction(water_body_inner);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_block, U_max);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
-    SimpleDynamics<InitialVelocity> initial_condition(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_body, U_max);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_body);
+    SimpleDynamics<InitialVelocity> initial_condition(water_body);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
+    ParticleSorting particle_sorting(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWrite<Real>(water_block, "DensitySummation");
-    body_states_recording.addToWrite<int>(water_block, "Indicator");
-    body_states_recording.addToWrite<Matd>(water_block, "LinearGradientCorrectionMatrix");
+    body_states_recording.addToWrite<Real>(water_body, "DensitySummation");
+    body_states_recording.addToWrite<int>(water_body, "Indicator");
+    body_states_recording.addToWrite<Matd>(water_body, "LinearGradientCorrectionMatrix");
     RestartIO restart_io(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_body);
     ObservedQuantityRecording<Real> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -183,7 +181,7 @@ int main(int ac, char *av[])
     if (sph_system.RestartStep() != 0)
     {
         physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
+        water_body.updateCellLinkedList();
         water_body_inner.updateConfiguration();
     }
     //----------------------------------------------------------------------
@@ -262,7 +260,7 @@ int main(int ac, char *av[])
             {
                 particle_sorting.exec();
             }
-            water_block.updateCellLinkedList();
+            water_body.updateCellLinkedList();
             water_body_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;

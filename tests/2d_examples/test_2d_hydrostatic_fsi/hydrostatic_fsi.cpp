@@ -68,14 +68,14 @@ Real Youngs_modulus = Ae;
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(DamP_lb);
-    water_block_shape.push_back(DamP_lt);
-    water_block_shape.push_back(DamP_rt);
-    water_block_shape.push_back(DamP_rb);
-    water_block_shape.push_back(DamP_lb);
+    std::vector<Vecd> water_body_shape;
+    water_body_shape.push_back(DamP_lb);
+    water_body_shape.push_back(DamP_lt);
+    water_body_shape.push_back(DamP_rt);
+    water_body_shape.push_back(DamP_rb);
+    water_body_shape.push_back(DamP_lb);
 
-    return water_block_shape;
+    return water_body_shape;
 }
 class WaterBlock : public MultiPolygonShape
 {
@@ -126,22 +126,22 @@ class WallBoundaryShape : public MultiPolygonShape
 //----------------------------------------------------------------------
 std::vector<Vecd> createGateShape()
 {
-    std::vector<Vecd> gate_shape;
-    gate_shape.push_back(GateP_lb);
-    gate_shape.push_back(GateP_lt);
-    gate_shape.push_back(GateP_rt);
-    gate_shape.push_back(GateP_rb);
-    gate_shape.push_back(GateP_lb);
+    std::vector<Vecd> key_points;
+    key_points.push_back(GateP_lb);
+    key_points.push_back(GateP_lt);
+    key_points.push_back(GateP_rt);
+    key_points.push_back(GateP_rb);
+    key_points.push_back(GateP_lb);
 
-    return gate_shape;
+    return key_points;
 }
 //----------------------------------------------------------------------
 //	Define the gate body shape.
 //----------------------------------------------------------------------
-class Gate : public MultiPolygonShape
+class GateShape : public MultiPolygonShape
 {
   public:
-    explicit Gate(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    GateShape() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createGateShape(), ShapeBooleanOps::add);
     }
@@ -199,19 +199,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    WaterBlock water_body_shape;
+    water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    Gate gate_shape("Gate");
-    SolidBody gate(sph_system, gate_shape.getName());
+    SolidBody gate(sph_system, "Gate");
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    GateShape gate_shape;
     gate.generateParticles<BaseParticles, Lattice>(gate_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
@@ -226,16 +226,16 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
+    InnerRelation water_body_inner(water_body);
     InnerRelation gate_inner(gate);
-    ContactRelation water_block_contact(water_block, {&wall_boundary, &gate});
-    ContactRelation gate_contact(gate, {&water_block});
+    ContactRelation water_body_contact(water_body, {&wall_boundary, &gate});
+    ContactRelation gate_contact(gate, {&water_body});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    ComplexRelation water_body_complex(water_body_inner, water_body_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -263,16 +263,16 @@ int main(int ac, char *av[])
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_body_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_body_inner, water_body_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_body_inner, water_body_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_body_inner, water_body_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
-        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+        fluid_damping(0.2, ConstructorArgs(water_body_inner, "Velocity", mu_f), ConstructorArgs(water_body_contact, "Velocity", mu_f));
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_ref);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
@@ -369,8 +369,8 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedList(); // water particle motion is small
-            water_block_complex.updateConfiguration();
+            water_body.updateCellLinkedList(); // water particle motion is small
+            water_body_complex.updateConfiguration();
             /** one need update configuration after periodic condition. */
             gate.updateCellLinkedList();
             gate_contact.updateConfiguration();

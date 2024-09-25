@@ -38,7 +38,7 @@ const Real physical_viscosity = 0.25 * sqrt(rho0_s * Youngs_modulus) * L;
 class Cube : public MultiPolygonShape
 {
   public:
-    explicit Cube(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Cube() : MultiPolygonShape()
     {
         Vec2d halfsize_cube(0.5 * L, 0.5 * L);
         Transform translation_cube(halfsize_cube + 0.65 * (resolution_ref + resolution_shell) * Vec2d::UnitY());
@@ -83,9 +83,8 @@ void run_simulation()
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
-    Cube cube_shape("FreeCube");
-    SolidBody free_cube(sph_system, cube_shape.getName());
-    LevelSetShape level_set_shape(free_cube, cube_shape);
+    SolidBody free_cube(sph_system, "FreeCube");
+    LevelSetShape level_set_shape(free_cube, makeShared<Cube>());
     level_set_shape.cleanLevelSet(0);
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>(level_set_shape);

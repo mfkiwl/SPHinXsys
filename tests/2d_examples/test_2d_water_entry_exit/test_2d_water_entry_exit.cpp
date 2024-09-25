@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     WettingFluidBody water_block_shape("WaterBody");
-    FluidBody water_block(sph_system, "WaterBlock");
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 

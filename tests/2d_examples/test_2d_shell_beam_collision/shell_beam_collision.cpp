@@ -31,7 +31,7 @@ Real physical_viscosity = 200.0; /** physical damping, here we choose the same v
 class Beam : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Beam() : MultiPolygonShape()
     {
         std::vector<Vecd> outer_beam_shape;
         outer_beam_shape.push_back(Vecd(-BW, -BW));
@@ -43,10 +43,10 @@ class Beam : public MultiPolygonShape
         multi_polygon_.addAPolygon(outer_beam_shape, ShapeBooleanOps::add);
     }
 };
-class Shell : public ComplexShape
+class ShellShape : public ComplexShape
 {
   public:
-    explicit Shell(const std::string &shape_name) : ComplexShape(shape_name)
+    ShellShape() : ComplexShape()
     {
         add<GeometricShapeBall>(circle_center, circle_radius + resolution_ref);
         subtract<GeometricShapeBall>(circle_center, circle_radius);
@@ -90,10 +90,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    Shell shell_shape("Shell");
-    SolidBody shell(sph_system, shell_shape.getName());
+    SolidBody shell(sph_system, "Shell");
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    LevelSetShape level_set_shape(shell, shell_shape, level_set_refinement_ratio);
+    LevelSetShape level_set_shape(shell, makeShared<ShellShape>(), level_set_refinement_ratio);
     shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {

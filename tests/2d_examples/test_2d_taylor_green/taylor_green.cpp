@@ -73,13 +73,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    // Using relaxed particle distribution if needed
+    FluidBody water_body(sph_system, "WaterBody");
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_block_shape;
     sph_system.ReloadParticles()
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
+        ? water_body.generateParticles<BaseParticles, Reload>(water_body.getName())
+        : water_body.generateParticles<BaseParticles, Lattice>(water_block_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -88,7 +87,7 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
+    InnerRelation water_block_inner(water_body);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -98,7 +97,7 @@ int main(int ac, char *av[])
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
+    SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     /** Pressure relaxation algorithm by using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous.
      * The other reason is that we are using transport velocity formulation,
@@ -108,22 +107,22 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<TruncatedLinear, AllParticles>> transport_velocity_correction(water_block_inner);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicAlongAxis periodic_along_y(water_block_shape.getBounds(), yAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_along_x);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_along_y);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, periodic_along_x);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, periodic_along_y);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    ReloadParticleIO write_particle_reload_files(water_block);
+    ReloadParticleIO write_particle_reload_files(water_body);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
-        write_total_kinetic_energy(water_block);
+        write_total_kinetic_energy(water_body);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(water_block);
+        write_maximum_speed(water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -185,7 +184,7 @@ int main(int ac, char *av[])
             /** Water block configuration and periodic condition. */
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
-            water_block.updateCellLinkedList();
+            water_body.updateCellLinkedList();
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             water_block_inner.updateConfiguration();

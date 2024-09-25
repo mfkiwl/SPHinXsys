@@ -136,14 +136,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_body_shape("WaterBody");
-    FluidBody water_body(sph_system, water_body_shape.getName());
+    FluidBody water_body(sph_system, "WaterBody");
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    WaterBlock water_body_shape;
     water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
-    WallBoundaryShape wall_boundary_shape;
     SolidBody wall_boundary(sph_system, "WallBoundary");
     wall_boundary.defineMaterial<Solid>();
+    WallBoundaryShape wall_boundary_shape;
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.

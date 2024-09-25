@@ -62,7 +62,7 @@ std::vector<Vecd> createBeamShape()
 class Beam : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Beam() : MultiPolygonShape()
     {
         multi_polygon_.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
@@ -120,9 +120,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    Beam beam_body_shape("BeamBody");
-    SolidBody beam_body(sph_system, beam_body_shape.getName());
+    SolidBody beam_body(sph_system, "BeamBody");
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    Beam beam_body_shape;
     beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

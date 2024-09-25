@@ -104,11 +104,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
-    water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    // Using relaxed particle distribution if needed
+    WaterBlock water_block_shape;
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
         : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);

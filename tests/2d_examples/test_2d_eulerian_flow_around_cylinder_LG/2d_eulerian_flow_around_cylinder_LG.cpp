@@ -90,7 +90,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, "WaterBlock");
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     WaterBlock water_block_shape;

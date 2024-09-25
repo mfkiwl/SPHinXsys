@@ -258,7 +258,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     WaterBlock water_block_shape();
-    FluidBody water_block(sph_system, "WaterBlock");
+    FluidBody water_block(sph_system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer, water_block_shape);

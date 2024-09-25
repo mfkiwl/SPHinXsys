@@ -24,7 +24,7 @@ BoundingBox system_domain_bounds(Vec2d(-radius - thickness, -radius - thickness)
 class Pipe : public MultiPolygonShape
 {
   public:
-    explicit Pipe(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    Pipe() : MultiPolygonShape()
     {
         multi_polygon_.addACircle(pipe_center, radius + thickness, 100, ShapeBooleanOps::add);
         multi_polygon_.addACircle(pipe_center, radius, 100, ShapeBooleanOps::sub);
@@ -40,10 +40,9 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     /** Creating body, materials and particles. */
-    Pipe pipe_body_shape("PipeBody");
-    SolidBody pipe_body(sph_system, pipe_body_shape.getName());
+    SolidBody pipe_body(sph_system, "PipeBody");
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    LevelSetShape level_set_shape(pipe_body, pipe_body_shape, level_set_refinement_ratio);
+    LevelSetShape level_set_shape(pipe_body, makeShared<Pipe>(), level_set_refinement_ratio);
     level_set_shape.writeLevelSet(sph_system);
     pipe_body.generateParticles<SurfaceParticles, Lattice>(level_set_shape, thickness);
 
